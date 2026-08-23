@@ -14,13 +14,13 @@ on:
       plan:
         required: true
         type: string
-    secrets:
-      NODE_AUTH_TOKEN:
-        required: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # id-token: write lets npm authenticate via OIDC trusted publishing — no
+    # NPM_TOKEN. Each package must have a trusted publisher pointing at this
+    # repo's release.yml (npm validates the calling workflow, not npm.yml).
     permissions:
       id-token: write
       contents: read
@@ -41,7 +41,6 @@ jobs:
 
       - name: Publish packages
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ fromJson(inputs.plan).announcement_tag }}
           TAG: ${{ fromJson(inputs.plan).announcement_tag }}
