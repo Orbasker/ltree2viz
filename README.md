@@ -1,36 +1,60 @@
 # ltree2mmd
 
-Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html) hierarchy into a
-[Mermaid](https://mermaid.js.org/) flowchart — or a self-contained interactive HTML page.
-
-```console
-$ printf 'Electronics\nElectronics.Computers\nElectronics.Computers.Laptops\nElectronics.Phones\nHome\nHome.Kitchen\n' | ltree2mmd -
-flowchart TD
-    n0["Electronics"]
-    n1["Computers"]
-    n2["Laptops"]
-    n3["Phones"]
-    n4["Home"]
-    n5["Kitchen"]
-    n0 --> n1
-    n1 --> n2
-    n0 --> n3
-    n4 --> n5
-```
+Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
+hierarchy into a [Mermaid](https://mermaid.js.org/) diagram — straight from the
+database, from a query, or from a plain list of paths on stdin.
 
 ```mermaid
+---
+title: "catalog"
+---
 flowchart TD
-    n0["Electronics"]
-    n1["Computers"]
-    n2["Laptops"]
-    n3["Phones"]
-    n4["Home"]
-    n5["Kitchen"]
+    n0["Top"]
+    n1["Collections"]
+    n2["Pictures"]
+    n3["Astronomy"]
+    n4["Hobbies"]
+    n5["Amateur Astronomy"]
+    n6["Science"]
+    n7["Astronomy"]
+    n8["Astrophysics"]
+    n9["Cosmology"]
     n0 --> n1
     n1 --> n2
-    n0 --> n3
+    n2 --> n3
+    n0 --> n4
     n4 --> n5
+    n0 --> n6
+    n6 --> n7
+    n7 --> n8
+    n7 --> n9
 ```
+
+That diagram is the tool's actual output, rendered by GitHub from a
+` ```mermaid ` block. `--format md` wraps the output in exactly this block, so
+your README doubles as a screenshot that never drifts from the data.
+
+## Try it in 30 seconds
+
+No database, no build — pipe newline-delimited paths through stdin:
+
+```sh
+printf 'a\na.b\na.b.c\na.b.d\n' | ltree2mmd -
+```
+
+Or run the full database demo. It starts a seeded Postgres and prints a diagram,
+going from `git clone` to rendered output in one command:
+
+```sh
+git clone https://github.com/Orbasker/ltree2mmd
+cd ltree2mmd
+docker compose up
+```
+
+The `db` service loads [`demo/seed.sql`](demo/seed.sql) — a `catalog` table with
+a `path ltree` column — and the `ltree2mmd` service renders it, printing the
+` ```mermaid ` block above to the log. Paste it into any Markdown file on GitHub
+to see the picture.
 
 ## Install
 
@@ -38,8 +62,10 @@ flowchart TD
 cargo install ltree2mmd
 ```
 
-Prebuilt binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64) are attached to
-every [release](https://github.com/Orbasker/ltree2mmd/releases). To install the latest one:
+Prebuilt binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64)
+are attached to every
+[release](https://github.com/Orbasker/ltree2mmd/releases), so you do not need a
+Rust toolchain:
 
 ```sh
 # macOS / Linux
@@ -51,126 +77,133 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Orbasker/ltree2mmd/rele
 powershell -c "irm https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.ps1 | iex"
 ```
 
+Or from a clone: `cargo install --path .`
+
 ## Usage
 
-Three ways to run it:
+Three ways to feed it a hierarchy:
 
 ```sh
-ltree2mmd --table catalog     # render a table from the database
-ltree2mmd tables              # list the ltree columns to choose from
-ltree2mmd -                   # render newline-delimited paths from stdin
+ltree2mmd --table catalog        # render a table from the database
+ltree2mmd tables                 # list the ltree columns to choose from
+ltree2mmd -                      # render newline-delimited paths from stdin
 ```
 
-### From a database
+The diagram goes to **stdout**; every diagnostic — warnings, truncation
+notices, errors — goes to **stderr**. So `ltree2mmd --table t | pbcopy` and
+`ltree2mmd --table t -o out.mmd` both stay clean.
+
+Common options:
+
+| Flag | Meaning |
+| --- | --- |
+| `-t, --table <TABLE>` | Table holding the hierarchy, optionally schema-qualified |
+| `-c, --path-column <COL>` | The `ltree` column; auto-detected when the table has exactly one |
+| `-l, --label-column <COL>` | Column to display; defaults to the last label of each path |
+| `-r, --root <PATH>` | Restrict output to this subtree |
+| `--depth <N>` | Levels to include below the root |
+| `--direction <TD\|LR\|BT\|RL>` | Flow direction (default `TD`) |
+| `--max-nodes <N>` | Cap on total nodes (default `300`) |
+| `--max-children <N>` | Siblings beyond this fold into a `+N more` node (default `20`) |
+| `--no-synthesize` | Drop rows with missing ancestors instead of inferring them |
+| `--title <TEXT>` | Title shown above the diagram |
+| `-f, --format <mermaid\|md\|html>` | Output format (default `mermaid`) |
+| `-o, --output <FILE>` | Write to a file instead of stdout |
+
+`--format md` wraps the flowchart in a fenced ` ```mermaid ` block for pasting
+into Markdown. `--format html` emits a self-contained interactive page with a
+collapsible tree.
+
+## Connecting to a database
+
+Connection details are resolved in this order — the first one that is set wins:
+
+1. **`--dsn <URL>`** on the command line
+2. **`DATABASE_URL`** in the environment
+3. the standard libpq **`PG*`** variables (`PGHOST`, `PGPORT`, `PGUSER`,
+   `PGPASSWORD`, `PGDATABASE`)
 
 ```sh
-export DATABASE_URL=postgres://user@localhost/shop
-
-# Discover what there is to render. Output is schema.table.column, one per line.
-ltree2mmd tables
-# public.catalog.path
-
-# Render it. The ltree column is auto-detected when the table has exactly one.
-ltree2mmd --table catalog
-
-# A schema-qualified table, one subtree, two levels deep, laid out left-to-right,
-# labelled from a "name" column, written to a file as a fenced markdown block.
-ltree2mmd --table store.catalog \
-  --root Electronics --depth 2 \
-  --label-column name \
-  --direction LR --format md -o tree.md
+ltree2mmd --dsn 'postgres://user:pass@host/db' --table catalog
+DATABASE_URL='postgres://user:pass@host/db' ltree2mmd --table catalog
+PGHOST=host PGUSER=user PGDATABASE=db ltree2mmd --table catalog
 ```
 
-Connection details are resolved in this order:
+The session is opened `READ ONLY` with a 30-second statement timeout, and the
+crate forbids `unsafe` and contains no write path at all. Managed providers
+(Neon, Supabase, RDS, …) are reached over TLS using the platform trust store;
+for a local plaintext server, add `?sslmode=disable` to the URL.
 
-1. `--dsn`
-2. `DATABASE_URL`
-3. the libpq environment variables (`PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`)
+## Size guards and truncation
 
-The session is opened read-only (`BEGIN READ ONLY`) with a 30-second `statement_timeout` and a
-pinned `search_path`, and TLS is negotiated against the platform's native trust store — so managed
-providers like Neon, Supabase, and RDS work without extra flags.
+Mermaid turns into an unreadable grey blob past a few hundred nodes, so two
+guards keep the diagram legible. **Both are reported loudly on stderr** — a
+clipped tree never silently passes for a complete one:
 
-### From stdin
+- **`--max-children`** (default 20): once a node has more than this many
+  siblings, the extras collapse into a single dashed `+N more` node.
+- **`--max-nodes`** (default 300): children are folded first, then the tree is
+  cut breadth-first to this many nodes, keeping a shallow overview rather than
+  one deep branch.
 
-No database needed — one path per line, blank lines ignored:
-
-```sh
-printf 'a\na.b\na.b.c\n' | ltree2mmd - --title Demo --direction LR --format md
 ```
+$ ltree2mmd --table big_catalog --max-nodes 100
+truncated: folded 4120 sibling(s) into "+N more" nodes; dropped 380 node(s) past the node limit
+```
+
+Raise the limits when you want the whole thing: `--max-nodes 100000
+--max-children 100000`.
+
+## Synthesized ancestors (the dashed nodes)
+
+`ltree` stores a full path per row, but the intermediate rows need not exist. If
+`Fruits.Apple` is present but `Fruits` is not, ltree2mmd **synthesizes** the
+missing `Fruits` node so the tree still connects — and marks it dashed, so an
+inferred node is never mistaken for one that was actually read:
 
 ```mermaid
----
-title: "Demo"
----
-flowchart LR
-    n0["a"]
-    n1["b"]
-    n2["c"]
+flowchart TD
+    n0["Fruits"]
+    n1["Apple"]
+    n2["Banana"]
+    n3["Grains"]
+    n4["Rice"]
+    n5["Basmati"]
+    n6["Vegetables"]
+    n7["Carrot"]
     n0 --> n1
-    n1 --> n2
+    n0 --> n2
+    n3 --> n4
+    n4 --> n5
+    n6 --> n7
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0,n3,n4,n6 inferred
 ```
 
-### Interactive HTML
+That was produced by:
 
 ```sh
-ltree2mmd --table catalog --format html -o tree.html
+printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' | ltree2mmd -
 ```
 
-A single file with no external assets: click a node to collapse or expand its subtree.
-
-## Options
-
-| Flag | Default | What it does |
-| --- | --- | --- |
-| `-` | | Read newline-delimited paths from stdin instead of a database |
-| `--dsn <DSN>` | `$DATABASE_URL` | Postgres connection string |
-| `-t, --table <TABLE>` | | Table holding the hierarchy, optionally schema-qualified |
-| `-c, --path-column <COL>` | auto-detected | Column of type `ltree`; required only when the table has more than one |
-| `-l, --label-column <COL>` | last path label | Column to display in each node |
-| `-r, --root <PATH>` | | Restrict output to this subtree |
-| `--depth <N>` | | Levels to include below the root |
-| `--direction <DIR>` | `TD` | Flow direction: `TD`, `LR`, `BT`, `RL` |
-| `--max-nodes <N>` | `300` | Cap on total nodes; the rest are dropped and reported |
-| `--max-children <N>` | `20` | Siblings beyond this fold into a single `+N more` node |
-| `--no-synthesize` | | Drop rows with missing ancestors instead of inferring them |
-| `--title <TITLE>` | | Title shown above the diagram |
-| `-o, --output <PATH>` | stdout | Write to a file instead of stdout |
-| `-f, --format <FMT>` | `mermaid` | `mermaid` (raw), `md` (fenced block), or `html` (interactive page) |
-
-`--root` and `--depth` are pushed down into SQL, so a subtree of a large table only transfers the
-rows it needs.
-
-## Behaviour worth knowing
-
-- **stdout is only ever the document.** Warnings, truncation notices, and errors all go to stderr,
-  so `ltree2mmd --table t | pbcopy` and `-o out.mmd` stay clean.
-- **Missing ancestors are synthesized.** If a row has path `a.b.c` but `a.b` is absent, `a.b` is
-  inferred and a warning is printed. `--no-synthesize` drops such rows instead.
-- **Big graphs are truncated, not silently mangled.** Past `--max-children`, extra siblings fold
-  into one `+N more` node; past `--max-nodes`, the remainder is dropped. Either way a summary lands
-  on stderr:
-
-  ```
-  truncated: folded 27 sibling(s) into "+N more" nodes
-  ```
-
-- **`--format html` ignores the limits** and renders the full tree, because the page collapses
-  interactively.
-- **Node ids are positional** (`n0`, `n1`, …), never derived from labels, so labels containing
-  Mermaid reserved words, quotes, or brackets can't corrupt the diagram.
+`Fruits`, `Vegetables`, `Grains`, and `Rice` are all dashed — no row carried
+them. The `+N more` collapse nodes from the size guards are drawn the same way,
+for the same reason. Pass `--no-synthesize` to drop rows with missing ancestors
+(and get a warning for each) instead.
 
 ## Requirements
 
-- Postgres with the `ltree` extension installed (any schema — it does not need to be on your
-  `search_path`).
-- Rust 1.85 or newer to build from source.
+- Postgres with the `ltree` extension installed. It does not need to be on your
+  `search_path` — the query casts the path column to `text`, so any schema
+  works.
+- Rust 1.85 or newer to build from source. Prebuilt binaries need nothing.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup, how to run the
+Postgres-backed tests, and the release procedure.
 
-## Licence
+## License
 
 Dual-licensed under either of
 
@@ -179,6 +212,6 @@ Dual-licensed under either of
 
 at your option.
 
-Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in
-this crate by you, as defined in the Apache-2.0 licence, shall be dual-licensed as above, without
-any additional terms or conditions.
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 licence, shall
+be dual-licensed as above, without any additional terms or conditions.

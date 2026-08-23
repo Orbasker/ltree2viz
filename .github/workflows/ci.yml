@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --all-targets
+      - run: cargo test
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo fmt --all --check
+
+  integration:
+    name: integration (postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD }}
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgres://postgres:${{ secrets.CI_POSTGRES_PASSWORD }}@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test
+
+  mermaid:
+    name: mermaid fixtures parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install -g @mermaid-js/mermaid-cli
+      - name: Render every fixture and validate with mmdc
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/mmd
+          # GitHub Actions runners have no privileged user namespaces, so
+          # Chromium's sandbox refuses to start; puppeteer needs --no-sandbox.
+          echo '{"args": ["--no-sandbox"]}' > /tmp/mmd/puppeteer.json
+          for fixture in tests/fixtures/*.txt; do
+            name=$(basename "$fixture" .txt)
+            out="/tmp/mmd/${name}.mmd"
+            ./target/release/ltree2mmd --title "$name" - < "$fixture" > "$out"
+            mmdc -p /tmp/mmd/puppeteer.json -i "$out" -o "/tmp/mmd/${name}.svg"
+          done

@@ -9,16 +9,22 @@ run the test suite.
 
 ## The checks
 
-These three are what CI runs, and what a PR is expected to pass:
+Run these before pushing:
 
 ```sh
-cargo fmt --check
+cargo fmt --all --check
 cargo clippy --all-targets -- -D warnings
 cargo test
 ```
 
 A bare `cargo test` passes without a database — the Postgres-backed targets detect the missing
 `TEST_DATABASE_URL` and skip with a note on stderr.
+
+`.github/workflows/ci.yml` runs the same three on Linux, macOS, and Windows, plus two jobs you
+can't easily reproduce with one command: an `integration` job that repeats `cargo test` against a
+`postgres:16` service with `TEST_DATABASE_URL` set, and a `mermaid` job that renders every
+`tests/fixtures/*.txt` and feeds the result through `mmdc` to prove the generated diagrams actually
+parse.
 
 ## Running the database tests
 
