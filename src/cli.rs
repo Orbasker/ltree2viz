@@ -12,6 +12,7 @@ pub enum Format {
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
+#[value(rename_all = "UPPER")]
 pub enum DirectionArg {
     Td,
     Lr,
@@ -34,15 +35,31 @@ impl From<DirectionArg> for Direction {
 #[command(
     name = "ltree2mmd",
     version,
-    about = "Turn a Postgres ltree table into a Mermaid diagram"
+    about = "Turn a Postgres ltree table into a Mermaid diagram",
+    long_about = "Turn a Postgres ltree hierarchy into a Mermaid flowchart.\n\n\
+        Three ways to run it:\n\n  \
+        ltree2mmd --table catalog        render a table from the database\n  \
+        ltree2mmd tables                 list the ltree columns to choose from\n  \
+        ltree2mmd -                      render newline-delimited paths from stdin\n\n\
+        The diagram goes to stdout; every diagnostic (warnings, truncation\n\
+        notices, errors) goes to stderr, so `ltree2mmd --table t | pbcopy` and\n\
+        `-o out.mmd` stay clean.\n\n\
+        Connection details are resolved in order: --dsn, then DATABASE_URL, then\n\
+        the libpq PG* variables (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE).",
+    after_help = "EXAMPLES:\n  \
+        ltree2mmd --table catalog\n  \
+        ltree2mmd --table store.catalog --root Electronics --depth 2\n  \
+        ltree2mmd --table catalog --direction LR --format md -o tree.md\n  \
+        ltree2mmd tables\n  \
+        printf 'a\\na.b\\na.b.c\\n' | ltree2mmd -"
 )]
 pub struct Args {
     #[command(subcommand)]
     pub command: Option<Command>,
 
-    /// Read newline-delimited paths from stdin instead of a database
-    #[arg(value_name = "-", hide = true)]
-    pub stdin: Option<String>,
+    /// Read newline-delimited paths from stdin instead of a database (pass `-`)
+    #[arg(value_name = "-")]
+    pub input: Option<String>,
 
     /// Postgres connection string
     #[arg(long, env = "DATABASE_URL")]
@@ -68,9 +85,11 @@ pub struct Args {
     #[arg(long)]
     pub depth: Option<u32>,
 
+    /// Flow direction of the rendered graph
     #[arg(long, value_enum, default_value_t = DirectionArg::Td)]
     pub direction: DirectionArg,
 
+    /// Cap on total nodes; the rest are dropped and reported
     #[arg(long, default_value_t = 300)]
     pub max_nodes: usize,
 
@@ -82,6 +101,7 @@ pub struct Args {
     #[arg(long)]
     pub no_synthesize: bool,
 
+    /// Title shown above the diagram
     #[arg(long)]
     pub title: Option<String>,
 
@@ -89,6 +109,7 @@ pub struct Args {
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 
+    /// Output format: raw mermaid, or a fenced markdown block
     #[arg(short, long, value_enum, default_value_t = Format::Mermaid)]
     pub format: Format,
 }
