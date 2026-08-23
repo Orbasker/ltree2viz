@@ -1,0 +1,5 @@
+---
+source: tests/corpus.rs
+expression: "render_paths(&[])"
+---
+flowchart TD

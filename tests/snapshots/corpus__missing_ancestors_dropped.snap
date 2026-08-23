@@ -1,0 +1,6 @@
+---
+source: tests/corpus.rs
+expression: out
+---
+flowchart TD
+    n0["a"]

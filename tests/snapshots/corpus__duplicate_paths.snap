@@ -1,0 +1,12 @@
+---
+source: tests/corpus.rs
+expression: out
+---
+flowchart TD
+    n0["team"]
+    n1["Engineering"]
+    n2["Sales"]
+    n0 --> n1
+    n0 --> n2
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0 inferred

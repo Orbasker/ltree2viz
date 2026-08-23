@@ -1,0 +1,16 @@
+---
+source: tests/corpus.rs
+expression: render_paths(&paths)
+---
+flowchart TD
+    n0["categoría"]
+    n1["emoji_🌳"]
+    n2["niño"]
+    n3["Ελληνικά"]
+    n4["日本語"]
+    n0 --> n1
+    n0 --> n2
+    n0 --> n3
+    n0 --> n4
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0 inferred

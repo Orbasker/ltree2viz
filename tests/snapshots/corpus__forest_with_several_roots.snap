@@ -1,0 +1,24 @@
+---
+source: tests/corpus.rs
+expression: render_paths(&paths)
+---
+flowchart TD
+    n0["Fruits"]
+    n1["Apple"]
+    n2["Banana"]
+    n3["Grains"]
+    n4["Rice"]
+    n5["Basmati"]
+    n6["Wheat"]
+    n7["Vegetables"]
+    n8["Carrot"]
+    n9["Potato"]
+    n0 --> n1
+    n0 --> n2
+    n3 --> n4
+    n4 --> n5
+    n3 --> n6
+    n7 --> n8
+    n7 --> n9
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0,n3,n4,n7 inferred

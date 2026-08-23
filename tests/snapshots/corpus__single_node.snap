@@ -1,0 +1,6 @@
+---
+source: tests/corpus.rs
+expression: "render_paths(&[\"solo\"])"
+---
+flowchart TD
+    n0["solo"]
