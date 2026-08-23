@@ -1,0 +1,4 @@
+Fruits.Apple
+Fruits.Banana
+Vegetables.Carrot
+Grains.Rice.Basmati

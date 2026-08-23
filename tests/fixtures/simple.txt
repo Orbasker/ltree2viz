@@ -1,0 +1,10 @@
+Top
+Top.Science
+Top.Science.Astronomy
+Top.Science.Astronomy.Astrophysics
+Top.Science.Astronomy.Cosmology
+Top.Hobbies
+Top.Hobbies.Amateurs_Astronomy
+Top.Collections
+Top.Collections.Pictures
+Top.Collections.Pictures.Astronomy

@@ -1,0 +1,21 @@
+[package]
+name = "ltree2mmd"
+version = "0.1.0"
+edition = "2024"
+description = "Turn a Postgres ltree table into a Mermaid diagram"
+repository = "https://github.com/Orbasker/ltree2mmd"
+license = "MIT OR Apache-2.0"
+keywords = ["postgres", "ltree", "mermaid", "diagram", "cli"]
+categories = ["command-line-utilities", "visualization"]
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.6", features = ["derive", "env"] }
+postgres = "0.19.14"
+thiserror = "2.0.20"
+
+[dev-dependencies]
+insta = "1.48.0"
+
+[lints.rust]
+unsafe_code = "forbid"
