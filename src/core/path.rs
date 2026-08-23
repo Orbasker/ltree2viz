@@ -29,6 +29,17 @@ impl LtreePath {
         &self.labels
     }
 
+    #[cfg(test)]
+    pub(crate) fn from_labels<I, S>(labels: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        Self {
+            labels: labels.into_iter().map(Into::into).collect(),
+        }
+    }
+
     pub fn nlevel(&self) -> usize {
         self.labels.len()
     }
