@@ -1,2 +1,6 @@
 /target
 *.snap.new
+
+# Generated diagram output
+*.mmd
+*.html

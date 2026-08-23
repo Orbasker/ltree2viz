@@ -9,6 +9,7 @@ use ltree2mmd::cli::{Args, Command, Format};
 use ltree2mmd::core::limits::{Limits, apply};
 use ltree2mmd::core::path::LtreePath;
 use ltree2mmd::core::render::flowchart::{Options, render};
+use ltree2mmd::core::render::html;
 use ltree2mmd::core::tree::{MissingAncestors, Row, build};
 use ltree2mmd::db::fetch::{Filter, fetch};
 use ltree2mmd::db::{connect, introspect};
@@ -118,21 +119,32 @@ fn render_rows(rows: Vec<Row>, args: &Args) -> Result<()> {
         eprintln!("warning: {warning}");
     }
 
-    let limits = Limits {
-        max_nodes: args.max_nodes,
-        max_children: args.max_children,
-    };
-    let truncation = apply(&mut tree, limits);
-    if let Some(summary) = truncation.summary() {
-        eprintln!("{summary}");
-    }
+    // HTML collapses interactively, so it renders the full tree rather than a
+    // pre-truncated one.
+    let document = if let Format::Html = args.format {
+        html::render(
+            &tree,
+            &html::Options {
+                title: args.title.clone(),
+            },
+        )
+    } else {
+        let limits = Limits {
+            max_nodes: args.max_nodes,
+            max_children: args.max_children,
+        };
+        let truncation = apply(&mut tree, limits);
+        if let Some(summary) = truncation.summary() {
+            eprintln!("{summary}");
+        }
 
-    let options = Options {
-        direction: args.direction.into(),
-        title: args.title.clone(),
+        let options = Options {
+            direction: args.direction.into(),
+            title: args.title.clone(),
+        };
+        let diagram = render(&tree, &truncation, &options);
+        wrap(diagram, args.format)
     };
-    let diagram = render(&tree, &truncation, &options);
-    let document = wrap(diagram, args.format);
 
     write_output(&document, args.output.as_deref())
 }
@@ -140,8 +152,8 @@ fn render_rows(rows: Vec<Row>, args: &Args) -> Result<()> {
 /// Wraps the flowchart in a fenced ```` ```mermaid ```` block for `--format md`.
 fn wrap(diagram: String, format: Format) -> String {
     match format {
-        Format::Mermaid => diagram,
         Format::Md => format!("```mermaid\n{diagram}```\n"),
+        _ => diagram,
     }
 }
 

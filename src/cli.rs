@@ -9,6 +9,8 @@ pub enum Format {
     #[default]
     Mermaid,
     Md,
+    /// A self-contained interactive HTML page with a collapsible tree.
+    Html,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

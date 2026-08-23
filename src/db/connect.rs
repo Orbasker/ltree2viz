@@ -1,7 +1,8 @@
 use std::env;
 
 use anyhow::{Context, Result, bail};
-use postgres::{Client, Config, NoTls};
+use postgres::{Client, Config};
+use postgres_native_tls::MakeTlsConnector;
 
 /// Statement timeout for the read-only session, in milliseconds.
 const STATEMENT_TIMEOUT_MS: u32 = 30_000;
@@ -18,19 +19,29 @@ pub fn connect(dsn: Option<&str>) -> Result<Client> {
 }
 
 fn open(dsn: Option<&str>) -> Result<Client> {
+    let tls = tls_connector()?;
+
     if let Some(dsn) = dsn {
-        return Client::connect(dsn, NoTls).context("connecting to database with the provided DSN");
+        return Client::connect(dsn, tls).context("connecting to database with the provided DSN");
     }
 
     if let Ok(url) = env::var("DATABASE_URL")
         && !url.is_empty()
     {
-        return Client::connect(&url, NoTls).context("connecting via DATABASE_URL");
+        return Client::connect(&url, tls).context("connecting via DATABASE_URL");
     }
 
     config_from_env()?
-        .connect(NoTls)
+        .connect(tls)
         .context("connecting via the PG* environment variables")
+}
+
+/// Builds a TLS connector from the platform's native trust store. Managed
+/// Postgres providers (Neon, Supabase, RDS, …) require TLS, so plaintext is not
+/// offered as an option.
+fn tls_connector() -> Result<MakeTlsConnector> {
+    let connector = native_tls::TlsConnector::new().context("building the TLS connector")?;
+    Ok(MakeTlsConnector::new(connector))
 }
 
 /// Builds a connection config from the libpq `PG*` variables.
