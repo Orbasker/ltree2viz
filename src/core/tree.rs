@@ -163,6 +163,7 @@ fn assemble(
         path,
         label: entry.label.clone(),
         synthesized: entry.synthesized,
+        fold: None,
         children: kids,
     }
 }

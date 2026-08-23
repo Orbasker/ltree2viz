@@ -118,6 +118,7 @@ mod tests {
             path: path(p),
             label: label.to_owned(),
             synthesized: false,
+            fold: None,
             children: Vec::new(),
         }
     }
@@ -192,7 +193,10 @@ mod tests {
                 title: Some("a \"b\" c".to_owned()),
             },
         );
-        assert!(out.starts_with("---\ntitle: \"a \\\"b\\\" c\"\n---\n"), "{out}");
+        assert!(
+            out.starts_with("---\ntitle: \"a \\\"b\\\" c\"\n---\n"),
+            "{out}"
+        );
     }
 
     #[test]
@@ -202,6 +206,7 @@ mod tests {
                 path: path("a"),
                 label: "a".to_owned(),
                 synthesized: false,
+                fold: None,
                 children: vec![leaf("a.b", "b"), leaf("a.c", "c")],
             }],
             warnings: Vec::new(),
@@ -224,6 +229,7 @@ mod tests {
                 path: path("a"),
                 label: "a".to_owned(),
                 synthesized: true,
+                fold: None,
                 children: vec![leaf("a.b", "b")],
             }],
             warnings: Vec::new(),
@@ -241,12 +247,14 @@ mod tests {
                 path: path("a"),
                 label: "a".to_owned(),
                 synthesized: false,
+                fold: None,
                 children: vec![
                     leaf("a.b", "b"),
                     Node {
                         path: path("a.__more__"),
                         label: "+3 more".to_owned(),
                         synthesized: true,
+                        fold: Some(3),
                         children: Vec::new(),
                     },
                 ],
