@@ -17,6 +17,9 @@ targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-musl", "x86_64-apple-d
 features = ["vendored-tls"]
 # Whether to install an updater program
 install-updater = false
+# The generated release.yml is hand-tweaked (custom-npm needs contents:read to
+# download release binaries), so skip dist's "CI is out of date" check.
+allow-dirty = ["ci"]
 # Publish jobs to run in CI
 publish-jobs = ["homebrew", "./crates-io", "./npm"]
 # Path that installers should place binaries in
