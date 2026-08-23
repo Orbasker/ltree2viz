@@ -99,8 +99,12 @@ fn build_query(
         conditions.push(format!("{ext}.nlevel({path}) <= ${index}::int4"));
     }
 
+    // `ltree`'s own comparison operator does not sort the way `LtreePath`'s
+    // `Ord` does (e.g. `a.10` sorts before `a.1.leaf`), so order by the same
+    // `::text` byte comparison the label parsing already commits to.
     let sql = format!(
-        "SELECT {select} FROM {schema}.{table} WHERE {conditions} ORDER BY {path}",
+        "SELECT {select} FROM {schema}.{table} WHERE {conditions} \
+         ORDER BY {path}::text COLLATE \"C\"",
         schema = quote_ident(&column.schema),
         table = quote_ident(&column.table),
         conditions = conditions.join(" AND "),
@@ -170,7 +174,7 @@ mod tests {
         assert_eq!(
             query.sql,
             "SELECT \"path\"::text FROM \"public\".\"catalog\" \
-             WHERE \"path\" IS NOT NULL ORDER BY \"path\""
+             WHERE \"path\" IS NOT NULL ORDER BY \"path\"::text COLLATE \"C\""
         );
         assert_eq!(query.root, None);
         assert_eq!(query.max_level, None);
@@ -272,7 +276,8 @@ mod tests {
             query.sql,
             "SELECT \"the\"\"path\"::text, \"la\"\"bel\"::text \
              FROM \"we\"\"ird\".\"my.table\" \
-             WHERE \"the\"\"path\" IS NOT NULL ORDER BY \"the\"\"path\""
+             WHERE \"the\"\"path\" IS NOT NULL \
+             ORDER BY \"the\"\"path\"::text COLLATE \"C\""
         );
     }
 
