@@ -39,6 +39,7 @@ jobs:
 
       - name: Publish packages
         env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ fromJson(inputs.plan).announcement_tag }}
           TAG: ${{ fromJson(inputs.plan).announcement_tag }}
