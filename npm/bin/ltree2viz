@@ -1,25 +1,25 @@
 #!/usr/bin/env node
 "use strict";
 
-// Resolves the ltree2mmd binary from the platform package that npm installed
-// (exactly one of the @ltree2mmd/* optionalDependencies matches this host) and
+// Resolves the ltree2viz binary from the platform package that npm installed
+// (exactly one of the @ltree2viz/* optionalDependencies matches this host) and
 // execs it. stdio is inherited so the diagram stays on stdout and diagnostics
-// on stderr — `npx ltree2mmd - | pbcopy` must pipe a clean diagram.
+// on stderr — `npx ltree2viz - | pbcopy` must pipe a clean diagram.
 
 const { spawnSync } = require("child_process");
 
 function resolveBinary() {
-  const pkg = `@ltree2mmd/${process.platform}-${process.arch}`;
-  const exe = process.platform === "win32" ? "ltree2mmd.exe" : "ltree2mmd";
+  const pkg = `@ltree2viz/${process.platform}-${process.arch}`;
+  const exe = process.platform === "win32" ? "ltree2viz.exe" : "ltree2viz";
   try {
     return require.resolve(`${pkg}/${exe}`);
   } catch {
     throw new Error(
-      `ltree2mmd: no prebuilt binary for ${process.platform}-${process.arch}.\n` +
+      `ltree2viz: no prebuilt binary for ${process.platform}-${process.arch}.\n` +
         `Expected the optional dependency ${pkg} to be installed. Supported ` +
         `platforms: darwin-arm64, darwin-x64, linux-x64, linux-arm64, win32-x64.\n` +
         `If you installed with --no-optional, reinstall without it. Otherwise ` +
-        `build from source: https://github.com/Orbasker/ltree2mmd`,
+        `build from source: https://github.com/Orbasker/ltree2viz`,
     );
   }
 }
@@ -35,7 +35,7 @@ try {
 const result = spawnSync(binary, process.argv.slice(2), { stdio: "inherit" });
 
 if (result.error) {
-  process.stderr.write(`ltree2mmd: failed to run binary: ${result.error.message}\n`);
+  process.stderr.write(`ltree2viz: failed to run binary: ${result.error.message}\n`);
   process.exit(1);
 }
 

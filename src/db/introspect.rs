@@ -71,7 +71,7 @@ pub fn resolve_column(
             .ok_or_else(|| {
                 anyhow::anyhow!(
                     "column {:?} on table {:?} is not of type ltree \
-                     (or does not exist). Run `ltree2mmd tables` to list ltree columns.",
+                     (or does not exist). Run `ltree2viz tables` to list ltree columns.",
                     column,
                     table
                 )
@@ -81,7 +81,7 @@ pub fn resolve_column(
     match candidates.as_slice() {
         [] => bail!(
             "table {:?} has no column of type ltree. \
-             Run `ltree2mmd tables` to list ltree columns.",
+             Run `ltree2viz tables` to list ltree columns.",
             table
         ),
         [only] => Ok(only.clone()),

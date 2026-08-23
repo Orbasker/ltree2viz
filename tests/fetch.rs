@@ -1,8 +1,8 @@
 mod common;
 
-use ltree2mmd::core::tree::Row;
-use ltree2mmd::db::fetch::{Filter, fetch};
-use ltree2mmd::db::introspect::LtreeColumn;
+use ltree2viz::core::tree::Row;
+use ltree2viz::db::fetch::{Filter, fetch};
+use ltree2viz::db::introspect::LtreeColumn;
 
 use crate::common::Schema;
 

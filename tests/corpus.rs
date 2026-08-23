@@ -3,10 +3,10 @@
 //! involved, which is the whole point — the renderer is locked byte-for-byte
 //! against a set of hand-picked hierarchies that exercise its edge cases.
 
-use ltree2mmd::core::limits::{Limits, apply};
-use ltree2mmd::core::path::LtreePath;
-use ltree2mmd::core::render::flowchart::{Direction, Options, render};
-use ltree2mmd::core::tree::{MissingAncestors, Row, build};
+use ltree2viz::core::limits::{Limits, apply};
+use ltree2viz::core::path::LtreePath;
+use ltree2viz::core::render::flowchart::{Direction, Options, render};
+use ltree2viz::core::tree::{MissingAncestors, Row, build};
 
 /// Limits high enough to never fire, so a case snapshots the tree as-is. Cases
 /// that mean to exercise folding opt into [`Limits::default`] instead.

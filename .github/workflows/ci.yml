@@ -74,6 +74,6 @@ jobs:
           for fixture in tests/fixtures/*.txt; do
             name=$(basename "$fixture" .txt)
             out="/tmp/mmd/${name}.mmd"
-            ./target/release/ltree2mmd --title "$name" - < "$fixture" > "$out"
+            ./target/release/ltree2viz --title "$name" - < "$fixture" > "$out"
             mmdc -p /tmp/mmd/puppeteer.json -i "$out" -o "/tmp/mmd/${name}.svg"
           done

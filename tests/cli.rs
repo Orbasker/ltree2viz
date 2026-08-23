@@ -15,15 +15,15 @@ fn tables_subcommand_lists_the_configured_ltree_column() {
         s = schema.name
     ));
 
-    let output = Command::new(env!("CARGO_BIN_EXE_ltree2mmd"))
+    let output = Command::new(env!("CARGO_BIN_EXE_ltree2viz"))
         .arg("tables")
         .env("DATABASE_URL", &dsn)
         .output()
-        .expect("run the ltree2mmd binary");
+        .expect("run the ltree2viz binary");
 
     assert!(
         output.status.success(),
-        "ltree2mmd tables failed: status={:?}, stderr={}",
+        "ltree2viz tables failed: status={:?}, stderr={}",
         output.status,
         String::from_utf8_lossy(&output.stderr)
     );
@@ -41,13 +41,13 @@ fn stdin_mode_renders_without_touching_a_database() {
     use std::io::Write;
     use std::process::Stdio;
 
-    let mut child = Command::new(env!("CARGO_BIN_EXE_ltree2mmd"))
+    let mut child = Command::new(env!("CARGO_BIN_EXE_ltree2viz"))
         .arg("-")
         .env_remove("DATABASE_URL")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .spawn()
-        .expect("spawn the ltree2mmd binary");
+        .expect("spawn the ltree2viz binary");
 
     child
         .stdin
@@ -56,7 +56,7 @@ fn stdin_mode_renders_without_touching_a_database() {
         .write_all(b"a\na.b\na.b.c\n")
         .expect("write paths to stdin");
 
-    let output = child.wait_with_output().expect("wait for ltree2mmd");
+    let output = child.wait_with_output().expect("wait for ltree2viz");
     assert!(output.status.success(), "status={:?}", output.status);
 
     let stdout = String::from_utf8_lossy(&output.stdout);

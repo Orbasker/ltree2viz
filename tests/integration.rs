@@ -3,8 +3,8 @@
 
 use std::fs;
 
-use ltree2mmd::core::path::LtreePath;
-use ltree2mmd::core::tree::{MissingAncestors, Node, Row, Tree, build};
+use ltree2viz::core::path::LtreePath;
+use ltree2viz::core::tree::{MissingAncestors, Node, Row, Tree, build};
 
 const FIXTURES: [&str; 3] = ["simple.txt", "forest.txt", "missing_ancestors.txt"];
 

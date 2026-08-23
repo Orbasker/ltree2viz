@@ -35,25 +35,25 @@ impl From<DirectionArg> for Direction {
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "ltree2mmd",
+    name = "ltree2viz",
     version,
     about = "Turn a Postgres ltree table into a Mermaid diagram",
     long_about = "Turn a Postgres ltree hierarchy into a Mermaid flowchart.\n\n\
         Three ways to run it:\n\n  \
-        ltree2mmd --table catalog        render a table from the database\n  \
-        ltree2mmd tables                 list the ltree columns to choose from\n  \
-        ltree2mmd -                      render newline-delimited paths from stdin\n\n\
+        ltree2viz --table catalog        render a table from the database\n  \
+        ltree2viz tables                 list the ltree columns to choose from\n  \
+        ltree2viz -                      render newline-delimited paths from stdin\n\n\
         The diagram goes to stdout; every diagnostic (warnings, truncation\n\
-        notices, errors) goes to stderr, so `ltree2mmd --table t | pbcopy` and\n\
+        notices, errors) goes to stderr, so `ltree2viz --table t | pbcopy` and\n\
         `-o out.mmd` stay clean.\n\n\
         Connection details are resolved in order: --dsn, then DATABASE_URL, then\n\
         the libpq PG* variables (PGHOST, PGPORT, PGUSER, PGPASSWORD, PGDATABASE).",
     after_help = "EXAMPLES:\n  \
-        ltree2mmd --table catalog\n  \
-        ltree2mmd --table store.catalog --root Electronics --depth 2\n  \
-        ltree2mmd --table catalog --direction LR --format md -o tree.md\n  \
-        ltree2mmd tables\n  \
-        printf 'a\\na.b\\na.b.c\\n' | ltree2mmd -"
+        ltree2viz --table catalog\n  \
+        ltree2viz --table store.catalog --root Electronics --depth 2\n  \
+        ltree2viz --table catalog --direction LR --format md -o tree.md\n  \
+        ltree2viz tables\n  \
+        printf 'a\\na.b\\na.b.c\\n' | ltree2viz -"
 )]
 pub struct Args {
     #[command(subcommand)]

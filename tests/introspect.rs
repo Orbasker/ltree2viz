@@ -1,6 +1,6 @@
 mod common;
 
-use ltree2mmd::db::introspect::{LtreeColumn, list_ltree_columns, resolve_column};
+use ltree2viz::db::introspect::{LtreeColumn, list_ltree_columns, resolve_column};
 
 use crate::common::Schema;
 
@@ -67,7 +67,7 @@ fn no_ltree_column_fails_and_mentions_tables_command() {
     let msg = err.to_string();
 
     assert!(msg.contains("no column of type ltree"), "message: {msg}");
-    assert!(msg.contains("ltree2mmd tables"), "message: {msg}");
+    assert!(msg.contains("ltree2viz tables"), "message: {msg}");
 }
 
 #[test]
