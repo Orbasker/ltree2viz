@@ -58,6 +58,18 @@ to see the picture.
 
 ## Install
 
+With Node already on your machine, no toolchain needed:
+
+```sh
+npx ltree2mmd@latest --help
+```
+
+`npx` pulls exactly one prebuilt binary for your platform via
+`optionalDependencies` — nothing compiles at install time. To put it on your
+`PATH`: `npm i -g ltree2mmd`.
+
+Or with Cargo:
+
 ```sh
 cargo install ltree2mmd
 ```

@@ -1,0 +1,46 @@
+# Custom `dist` publish job: publishes the npm wrapper once the release
+# binaries have all been built and attached to the GitHub Release.
+#
+# esbuild-style: one platform package per target holding a single binary, plus a
+# root `ltree2mmd` package whose optionalDependencies pin them. npm installs
+# only the platform package whose os/cpu match, so nothing is fetched at install
+# time. Platform packages publish first; the root package last, because its
+# optionalDependencies must already resolve on the registry.
+name: Publish to npm
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # Trusted publishing to npm via OIDC — no long-lived NPM_TOKEN.
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      # Trusted publishing needs a recent npm client.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Publish packages
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ fromJson(inputs.plan).announcement_tag }}
+          TAG: ${{ fromJson(inputs.plan).announcement_tag }}
+          NPM_PUBLISH: "1"
+        run: node npm/build.mjs
