@@ -25,6 +25,9 @@ pub struct Node {
     pub label: String,
     /// No row carried this path; it was inferred from a descendant.
     pub synthesized: bool,
+    /// `Some(n)` marks a synthetic `+n more` node that stands in for `n`
+    /// siblings folded away by the child limit. `None` for real nodes.
+    pub fold: Option<usize>,
     pub children: Vec<Node>,
 }
 
