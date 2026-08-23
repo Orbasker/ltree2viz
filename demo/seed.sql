@@ -1,23 +1,26 @@
--- Seed data for the ltree2mmd demo: a small product catalog stored as an ltree
--- hierarchy. Runs automatically the first time the postgres container boots.
+-- Seed data for the ltree2mmd demo.
+--
+-- Runs automatically the first time the demo Postgres container starts
+-- (Postgres executes every file in /docker-entrypoint-initdb.d on init).
 
 CREATE EXTENSION IF NOT EXISTS ltree;
 
 CREATE TABLE catalog (
     id   serial PRIMARY KEY,
-    path ltree NOT NULL
+    path ltree NOT NULL,
+    name text  NOT NULL
 );
 
-INSERT INTO catalog (path) VALUES
-    ('Electronics'),
-    ('Electronics.Computers'),
-    ('Electronics.Computers.Laptops'),
-    ('Electronics.Computers.Desktops'),
-    ('Electronics.Phones'),
-    ('Electronics.Phones.Android'),
-    ('Electronics.Phones.iOS'),
-    ('Home'),
-    ('Home.Kitchen'),
-    ('Home.Kitchen.Cookware'),
-    ('Home.Garden'),
-    ('Home.Garden.Tools');
+CREATE INDEX catalog_path_gist ON catalog USING gist (path);
+
+INSERT INTO catalog (path, name) VALUES
+    ('Top',                                'Top'),
+    ('Top.Science',                        'Science'),
+    ('Top.Science.Astronomy',              'Astronomy'),
+    ('Top.Science.Astronomy.Astrophysics', 'Astrophysics'),
+    ('Top.Science.Astronomy.Cosmology',    'Cosmology'),
+    ('Top.Hobbies',                        'Hobbies'),
+    ('Top.Hobbies.Amateurs_Astronomy',     'Amateur Astronomy'),
+    ('Top.Collections',                    'Collections'),
+    ('Top.Collections.Pictures',           'Pictures'),
+    ('Top.Collections.Pictures.Astronomy', 'Astronomy');
