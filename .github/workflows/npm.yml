@@ -14,12 +14,14 @@ on:
       plan:
         required: true
         type: string
+    secrets:
+      NODE_AUTH_TOKEN:
+        required: true
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      # Trusted publishing to npm via OIDC — no long-lived NPM_TOKEN.
       id-token: write
       contents: read
     steps:
