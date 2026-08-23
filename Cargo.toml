@@ -1,11 +1,11 @@
 [package]
-name = "ltree2mmd"
+name = "ltree2viz"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Turn a Postgres ltree table into a Mermaid diagram"
-homepage = "https://github.com/Orbasker/ltree2mmd"
-repository = "https://github.com/Orbasker/ltree2mmd"
+homepage = "https://github.com/Orbasker/ltree2viz"
+repository = "https://github.com/Orbasker/ltree2viz"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["postgres", "ltree", "mermaid", "diagram", "cli"]

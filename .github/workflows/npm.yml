@@ -2,7 +2,7 @@
 # binaries have all been built and attached to the GitHub Release.
 #
 # esbuild-style: one platform package per target holding a single binary, plus a
-# root `ltree2mmd` package whose optionalDependencies pin them. npm installs
+# root `ltree2viz` package whose optionalDependencies pin them. npm installs
 # only the platform package whose os/cpu match, so nothing is fetched at install
 # time. Platform packages publish first; the root package last, because its
 # optionalDependencies must already resolve on the registry.

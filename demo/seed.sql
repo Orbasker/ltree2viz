@@ -1,4 +1,4 @@
--- Seed data for the ltree2mmd demo.
+-- Seed data for the ltree2viz demo.
 --
 -- Runs automatically the first time the demo Postgres container starts
 -- (Postgres executes every file in /docker-entrypoint-initdb.d on init).

@@ -5,14 +5,14 @@ use std::process::ExitCode;
 use anyhow::{Context, Result, bail};
 use clap::Parser;
 
-use ltree2mmd::cli::{Args, Command, Format};
-use ltree2mmd::core::limits::{Limits, apply};
-use ltree2mmd::core::path::LtreePath;
-use ltree2mmd::core::render::flowchart::{Options, render};
-use ltree2mmd::core::render::html;
-use ltree2mmd::core::tree::{MissingAncestors, Row, build};
-use ltree2mmd::db::fetch::{Filter, fetch};
-use ltree2mmd::db::{connect, introspect};
+use ltree2viz::cli::{Args, Command, Format};
+use ltree2viz::core::limits::{Limits, apply};
+use ltree2viz::core::path::LtreePath;
+use ltree2viz::core::render::flowchart::{Options, render};
+use ltree2viz::core::render::html;
+use ltree2viz::core::tree::{MissingAncestors, Row, build};
+use ltree2viz::db::fetch::{Filter, fetch};
+use ltree2viz::db::{connect, introspect};
 
 const STDIN_ARG: &str = "-";
 
@@ -87,7 +87,7 @@ fn run_database(args: &Args) -> Result<()> {
     let Some(table) = args.table.as_deref() else {
         bail!(
             "no input selected: pass --table <TABLE> to read from a database, \
-             `-` to read paths from stdin, or run `ltree2mmd tables` to discover \
+             `-` to read paths from stdin, or run `ltree2viz tables` to discover \
              ltree columns. See --help for details."
         );
     };

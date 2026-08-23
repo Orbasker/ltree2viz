@@ -1,4 +1,4 @@
-# ltree2mmd
+# ltree2viz
 
 Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
 hierarchy into a [Mermaid](https://mermaid.js.org/) diagram — straight from the
@@ -39,20 +39,20 @@ your README doubles as a screenshot that never drifts from the data.
 No database, no build — pipe newline-delimited paths through stdin:
 
 ```sh
-printf 'a\na.b\na.b.c\na.b.d\n' | ltree2mmd -
+printf 'a\na.b\na.b.c\na.b.d\n' | ltree2viz -
 ```
 
 Or run the full database demo. It starts a seeded Postgres and prints a diagram,
 going from `git clone` to rendered output in one command:
 
 ```sh
-git clone https://github.com/Orbasker/ltree2mmd
-cd ltree2mmd
+git clone https://github.com/Orbasker/ltree2viz
+cd ltree2viz
 docker compose up
 ```
 
 The `db` service loads [`demo/seed.sql`](demo/seed.sql) — a `catalog` table with
-a `path ltree` column — and the `ltree2mmd` service renders it, printing the
+a `path ltree` column — and the `ltree2viz` service renders it, printing the
 ` ```mermaid ` block above to the log. Paste it into any Markdown file on GitHub
 to see the picture.
 
@@ -61,32 +61,32 @@ to see the picture.
 With Node already on your machine, no toolchain needed:
 
 ```sh
-npx ltree2mmd@latest --help
+npx ltree2viz@latest --help
 ```
 
 `npx` pulls exactly one prebuilt binary for your platform via
 `optionalDependencies` — nothing compiles at install time. To put it on your
-`PATH`: `npm i -g ltree2mmd`.
+`PATH`: `npm i -g ltree2viz`.
 
 Or with Cargo:
 
 ```sh
-cargo install ltree2mmd
+cargo install ltree2viz
 ```
 
 Prebuilt binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64)
 are attached to every
-[release](https://github.com/Orbasker/ltree2mmd/releases), so you do not need a
+[release](https://github.com/Orbasker/ltree2viz/releases), so you do not need a
 Rust toolchain:
 
 ```sh
 # macOS / Linux
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Orbasker/ltree2viz/releases/latest/download/ltree2viz-installer.sh | sh
 ```
 
 ```powershell
 # Windows
-powershell -c "irm https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.ps1 | iex"
+powershell -c "irm https://github.com/Orbasker/ltree2viz/releases/latest/download/ltree2viz-installer.ps1 | iex"
 ```
 
 On macOS or Linuxbrew, install the prebuilt binary through Homebrew (no Rust
@@ -94,7 +94,7 @@ toolchain needed):
 
 ```sh
 brew tap Orbasker/tap
-brew install ltree2mmd
+brew install ltree2viz
 ```
 
 Or from a clone: `cargo install --path .`
@@ -104,14 +104,14 @@ Or from a clone: `cargo install --path .`
 Three ways to feed it a hierarchy:
 
 ```sh
-ltree2mmd --table catalog        # render a table from the database
-ltree2mmd tables                 # list the ltree columns to choose from
-ltree2mmd -                      # render newline-delimited paths from stdin
+ltree2viz --table catalog        # render a table from the database
+ltree2viz tables                 # list the ltree columns to choose from
+ltree2viz -                      # render newline-delimited paths from stdin
 ```
 
 The diagram goes to **stdout**; every diagnostic — warnings, truncation
-notices, errors — goes to **stderr**. So `ltree2mmd --table t | pbcopy` and
-`ltree2mmd --table t -o out.mmd` both stay clean.
+notices, errors — goes to **stderr**. So `ltree2viz --table t | pbcopy` and
+`ltree2viz --table t -o out.mmd` both stay clean.
 
 Common options:
 
@@ -144,9 +144,9 @@ Connection details are resolved in this order — the first one that is set wins
    `PGPASSWORD`, `PGDATABASE`)
 
 ```sh
-ltree2mmd --dsn 'postgres://user:pass@host/db' --table catalog
-DATABASE_URL='postgres://user:pass@host/db' ltree2mmd --table catalog
-PGHOST=host PGUSER=user PGDATABASE=db ltree2mmd --table catalog
+ltree2viz --dsn 'postgres://user:pass@host/db' --table catalog
+DATABASE_URL='postgres://user:pass@host/db' ltree2viz --table catalog
+PGHOST=host PGUSER=user PGDATABASE=db ltree2viz --table catalog
 ```
 
 The session is opened `READ ONLY` with a 30-second statement timeout, and the
@@ -167,7 +167,7 @@ clipped tree never silently passes for a complete one:
   one deep branch.
 
 ```
-$ ltree2mmd --table big_catalog --max-nodes 100
+$ ltree2viz --table big_catalog --max-nodes 100
 truncated: folded 4120 sibling(s) into "+N more" nodes; dropped 380 node(s) past the node limit
 ```
 
@@ -177,7 +177,7 @@ Raise the limits when you want the whole thing: `--max-nodes 100000
 ## Synthesized ancestors (the dashed nodes)
 
 `ltree` stores a full path per row, but the intermediate rows need not exist. If
-`Fruits.Apple` is present but `Fruits` is not, ltree2mmd **synthesizes** the
+`Fruits.Apple` is present but `Fruits` is not, ltree2viz **synthesizes** the
 missing `Fruits` node so the tree still connects — and marks it dashed, so an
 inferred node is never mistaken for one that was actually read:
 
@@ -203,7 +203,7 @@ class n0,n3,n4,n6 inferred
 That was produced by:
 
 ```sh
-printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' | ltree2mmd -
+printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' | ltree2viz -
 ```
 
 `Fruits`, `Vegetables`, `Grains`, and `Rice` are all dashed — no row carried

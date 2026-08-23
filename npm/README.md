@@ -1,10 +1,10 @@
-# ltree2mmd
+# ltree2viz
 
 Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
 table into a [Mermaid](https://mermaid.js.org/) diagram.
 
 ```sh
-npx ltree2mmd@latest --help
+npx ltree2viz@latest --help
 ```
 
 This package is a thin JS shim. Installing it pulls in exactly one prebuilt
@@ -17,20 +17,20 @@ behind proxies, and in cached `npm ci` runs.
 Read `ltree` paths from stdin and render a flowchart:
 
 ```sh
-printf 'a\na.b\na.b.c\n' | npx ltree2mmd -
+printf 'a\na.b\na.b.c\n' | npx ltree2viz -
 ```
 
 Or read straight from a database:
 
 ```sh
-npx ltree2mmd --table my_tree --dsn "$DATABASE_URL"
+npx ltree2viz --table my_tree --dsn "$DATABASE_URL"
 ```
 
 The diagram is written to stdout and all diagnostics to stderr, so piping stays
 clean:
 
 ```sh
-npx ltree2mmd - | pbcopy
+npx ltree2viz - | pbcopy
 ```
 
 ## Supported platforms
@@ -40,7 +40,7 @@ glibc distros alike), and Windows (x64).
 
 ## Other install methods
 
-See the [project README](https://github.com/Orbasker/ltree2mmd) for the shell
+See the [project README](https://github.com/Orbasker/ltree2viz) for the shell
 installer, `cargo install`, and Docker.
 
 ## License

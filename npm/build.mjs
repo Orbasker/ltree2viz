@@ -20,18 +20,18 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const BUILD_DIR = join(HERE, "build");
 const DOWNLOAD_DIR = join(BUILD_DIR, "archives");
 
-const APP = "ltree2mmd";
-const REPO = "https://github.com/Orbasker/ltree2mmd";
+const APP = "ltree2viz";
+const REPO = "https://github.com/Orbasker/ltree2viz";
 const DESCRIPTION = "Turn a Postgres ltree table into a Mermaid diagram";
 const LICENSE = "MIT OR Apache-2.0";
 
 // One entry per platform package. `target` is the Rust target triple dist built.
 const PLATFORMS = [
-  { target: "aarch64-apple-darwin", os: "darwin", cpu: "arm64", exe: "ltree2mmd" },
-  { target: "x86_64-apple-darwin", os: "darwin", cpu: "x64", exe: "ltree2mmd" },
-  { target: "x86_64-unknown-linux-musl", os: "linux", cpu: "x64", exe: "ltree2mmd" },
-  { target: "aarch64-unknown-linux-musl", os: "linux", cpu: "arm64", exe: "ltree2mmd" },
-  { target: "x86_64-pc-windows-msvc", os: "win32", cpu: "x64", exe: "ltree2mmd.exe" },
+  { target: "aarch64-apple-darwin", os: "darwin", cpu: "arm64", exe: "ltree2viz" },
+  { target: "x86_64-apple-darwin", os: "darwin", cpu: "x64", exe: "ltree2viz" },
+  { target: "x86_64-unknown-linux-musl", os: "linux", cpu: "x64", exe: "ltree2viz" },
+  { target: "aarch64-unknown-linux-musl", os: "linux", cpu: "arm64", exe: "ltree2viz" },
+  { target: "x86_64-pc-windows-msvc", os: "win32", cpu: "x64", exe: "ltree2viz.exe" },
 ];
 
 const version = required("VERSION").replace(/^v/, "");
@@ -51,7 +51,7 @@ function run(cmd, args, opts = {}) {
   return execFileSync(cmd, args, { stdio: "inherit", ...opts });
 }
 
-// dist archives are `ltree2mmd-<target>.tar.xz` (unix) / `.zip` (windows) and
+// dist archives are `ltree2viz-<target>.tar.xz` (unix) / `.zip` (windows) and
 // unpack to a directory containing the binary somewhere inside.
 function archiveName(platform) {
   const ext = platform.os === "win32" ? "zip" : "tar.xz";
@@ -94,7 +94,7 @@ function writeJson(path, value) {
 }
 
 function assemblePlatform(platform) {
-  const name = `@ltree2mmd/${platform.os}-${platform.cpu}`;
+  const name = `@ltree2viz/${platform.os}-${platform.cpu}`;
   const pkgDir = join(BUILD_DIR, `${platform.os}-${platform.cpu}`);
   rmSync(pkgDir, { recursive: true, force: true });
   mkdirSync(pkgDir, { recursive: true });
@@ -119,17 +119,17 @@ function assemblePlatform(platform) {
 }
 
 function assembleRoot() {
-  const pkgDir = join(BUILD_DIR, "ltree2mmd");
+  const pkgDir = join(BUILD_DIR, "ltree2viz");
   rmSync(pkgDir, { recursive: true, force: true });
   mkdirSync(join(pkgDir, "bin"), { recursive: true });
 
-  copyFileSync(join(HERE, "bin", "ltree2mmd"), join(pkgDir, "bin", "ltree2mmd"));
-  chmodSync(join(pkgDir, "bin", "ltree2mmd"), 0o755);
+  copyFileSync(join(HERE, "bin", "ltree2viz"), join(pkgDir, "bin", "ltree2viz"));
+  chmodSync(join(pkgDir, "bin", "ltree2viz"), 0o755);
   copyFileSync(join(HERE, "README.md"), join(pkgDir, "README.md"));
 
   const optionalDependencies = {};
   for (const platform of PLATFORMS) {
-    optionalDependencies[`@ltree2mmd/${platform.os}-${platform.cpu}`] = version;
+    optionalDependencies[`@ltree2viz/${platform.os}-${platform.cpu}`] = version;
   }
 
   writeJson(join(pkgDir, "package.json"), {
@@ -140,7 +140,7 @@ function assembleRoot() {
     repository: { type: "git", url: `git+${REPO}.git` },
     homepage: `${REPO}#readme`,
     keywords: ["postgres", "ltree", "mermaid", "diagram", "cli"],
-    bin: { ltree2mmd: "bin/ltree2mmd" },
+    bin: { ltree2viz: "bin/ltree2viz" },
     files: ["bin"],
     engines: { node: ">=14" },
     optionalDependencies,

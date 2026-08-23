@@ -1,4 +1,4 @@
-# Contributing to ltree2mmd
+# Contributing to ltree2viz
 
 Thanks for taking the time. Bug reports, feature ideas, and pull requests are all welcome.
 
@@ -32,7 +32,7 @@ Most of the suite is pure logic, but `tests/cli.rs`, `tests/fetch.rs`, and `test
 exercise real SQL. Point `TEST_DATABASE_URL` at a Postgres you don't mind being scribbled on:
 
 ```sh
-docker run --rm -d --name ltree2mmd-pg \
+docker run --rm -d --name ltree2viz-pg \
   -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:17
 
 export TEST_DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres

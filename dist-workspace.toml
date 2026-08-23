@@ -24,7 +24,7 @@ install-path = "CARGO_HOME"
 # A GitHub repo to push Homebrew formulas to
 tap = "Orbasker/homebrew-tap"
 # Customize the Homebrew formula name
-formula = "ltree2mmd"
+formula = "ltree2viz"
 
 # Native ARM runner: cross-compiling for aarch64 Linux is not worth it.
 [dist.github-custom-runners]

@@ -11,5 +11,5 @@ FROM debian:bookworm-slim
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libssl3 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/release/ltree2mmd /usr/local/bin/ltree2mmd
-ENTRYPOINT ["ltree2mmd"]
+COPY --from=build /app/target/release/ltree2viz /usr/local/bin/ltree2viz
+ENTRYPOINT ["ltree2viz"]

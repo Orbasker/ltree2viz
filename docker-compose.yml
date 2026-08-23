@@ -13,7 +13,7 @@ services:
       timeout: 3s
       retries: 30
 
-  ltree2mmd:
+  ltree2viz:
     build: .
     depends_on:
       db:

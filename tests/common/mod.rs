@@ -4,7 +4,7 @@
 use std::process::id;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use ltree2mmd::db::connect::connect;
+use ltree2viz::db::connect::connect;
 use postgres::{Client, NoTls};
 
 /// Returns the test connection string, or `None` when the suite should skip.
@@ -26,7 +26,7 @@ pub struct Schema {
 impl Schema {
     pub fn new(dsn: &str) -> Self {
         let n = SCHEMA_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let name = format!("ltree2mmd_test_{}_{}", id(), n);
+        let name = format!("ltree2viz_test_{}_{}", id(), n);
         let mut setup = Client::connect(dsn, NoTls).expect("setup connection");
         ensure_ltree(&mut setup);
         setup
@@ -105,7 +105,7 @@ impl Database {
     /// Returns `None` when the test role may not create databases.
     pub fn new(dsn: &str, setup_sql: &str) -> Option<Self> {
         let n = SCHEMA_COUNTER.fetch_add(1, Ordering::Relaxed);
-        let name = format!("ltree2mmd_db_{}_{}", id(), n);
+        let name = format!("ltree2viz_db_{}_{}", id(), n);
         let mut admin = Client::connect(dsn, NoTls).expect("admin connection");
         admin
             .batch_execute(&format!("CREATE DATABASE {name}"))
