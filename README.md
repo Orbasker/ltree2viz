@@ -1,161 +1,149 @@
 # ltree2mmd
 
 Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
-hierarchy into a [Mermaid](https://mermaid.js.org/) diagram.
-
-Point it at a table and it renders the tree to stdout. GitHub renders Mermaid
-natively, so a `--format md` diagram pasted into a README *is* the screenshot:
+hierarchy into a [Mermaid](https://mermaid.js.org/) diagram — straight from the
+database, from a query, or from a plain list of paths on stdin.
 
 ```mermaid
+---
+title: "catalog"
+---
 flowchart TD
-    n0["Electronics"]
-    n1["Computers"]
-    n2["Desktops"]
-    n3["Laptops"]
-    n4["Phones"]
-    n5["Android"]
-    n6["iOS"]
-    n7["Home"]
-    n8["Garden"]
-    n9["Tools"]
-    n10["Kitchen"]
-    n11["Cookware"]
+    n0["Top"]
+    n1["Collections"]
+    n2["Pictures"]
+    n3["Astronomy"]
+    n4["Hobbies"]
+    n5["Amateur Astronomy"]
+    n6["Science"]
+    n7["Astronomy"]
+    n8["Astrophysics"]
+    n9["Cosmology"]
     n0 --> n1
     n1 --> n2
-    n1 --> n3
+    n2 --> n3
     n0 --> n4
     n4 --> n5
-    n4 --> n6
+    n0 --> n6
+    n6 --> n7
     n7 --> n8
-    n8 --> n9
-    n7 --> n10
-    n10 --> n11
+    n7 --> n9
 ```
 
-That diagram is the exact output of the [demo](#30-second-demo) below.
+That diagram is the tool's actual output, rendered by GitHub from a
+` ```mermaid ` block. `--format md` wraps the output in exactly this block, so
+your README doubles as a screenshot that never drifts from the data.
 
-## Try it in 10 seconds — no database
+## Try it in 30 seconds
 
-Stdin mode reads newline-delimited paths, so you can see what the tool does
-before pointing it at anything:
+No database, no build — pipe newline-delimited paths through stdin:
 
-```console
-$ printf 'a\na.b\na.b.c\n' | cargo run -- -
-flowchart TD
-    n0["a"]
-    n1["b"]
-    n2["c"]
-    n0 --> n1
-    n1 --> n2
+```sh
+printf 'a\na.b\na.b.c\na.b.d\n' | ltree2mmd -
 ```
 
-Or feed it a file:
+Or run the full database demo. It starts a seeded Postgres and prints a diagram,
+going from `git clone` to rendered output in one command:
 
-```console
-$ cargo run -- - < demo/paths.txt
+```sh
+git clone https://github.com/Orbasker/ltree2mmd
+cd ltree2mmd
+docker compose up
 ```
 
-## 30-second demo
+The `db` service loads [`demo/seed.sql`](demo/seed.sql) — a `catalog` table with
+a `path ltree` column — and the `ltree2mmd` service renders it, printing the
+` ```mermaid ` block above to the log. Paste it into any Markdown file on GitHub
+to see the picture.
 
-`git clone` → rendered diagram, with a seeded Postgres from Docker:
+## Install
 
-```console
-$ docker compose -f demo/docker-compose.yml up -d   # postgres:16 + seed.sql
-$ export DATABASE_URL='postgres://demo:demo@localhost:5432/demo'
-$ cargo run -- tables                               # discover ltree columns
-public.catalog.path
-$ cargo run -- --table catalog --format md > catalog.md
+```sh
+cargo install --path .
 ```
-
-`catalog.md` is a fenced ```` ```mermaid ```` block — paste it into any GitHub
-file and it renders as the diagram at the top of this README.
-
-Tear down with `docker compose -f demo/docker-compose.yml down -v`.
 
 ## Usage
 
-```
-ltree2mmd --table catalog        render a table from the database
-ltree2mmd tables                 list the ltree columns to choose from
-ltree2mmd -                      render newline-delimited paths from stdin
+Three ways to feed it a hierarchy:
+
+```sh
+ltree2mmd --table catalog        # render a table from the database
+ltree2mmd tables                 # list the ltree columns to choose from
+ltree2mmd -                      # render newline-delimited paths from stdin
 ```
 
 The diagram goes to **stdout**; every diagnostic — warnings, truncation
 notices, errors — goes to **stderr**. So `ltree2mmd --table t | pbcopy` and
-`-o out.mmd` stay clean.
+`ltree2mmd --table t -o out.mmd` both stay clean.
 
-Common flags (`--help` has the full list):
+Common options:
 
 | Flag | Meaning |
 | --- | --- |
-| `--table <T>` | Table holding the hierarchy, optionally `schema.table` |
-| `-c, --path-column <C>` | The `ltree` column; auto-detected when the table has exactly one |
-| `-l, --label-column <C>` | Column to display; defaults to the last label of each path |
+| `-t, --table <TABLE>` | Table holding the hierarchy, optionally schema-qualified |
+| `-c, --path-column <COL>` | The `ltree` column; auto-detected when the table has exactly one |
+| `-l, --label-column <COL>` | Column to display; defaults to the last label of each path |
 | `-r, --root <PATH>` | Restrict output to this subtree |
 | `--depth <N>` | Levels to include below the root |
 | `--direction <TD\|LR\|BT\|RL>` | Flow direction (default `TD`) |
-| `--format <mermaid\|md\|html>` | Raw Mermaid, a fenced markdown block, or a self-contained interactive HTML page |
-| `-o, --output <FILE>` | Write to a file instead of stdout |
-| `--max-nodes <N>` | Cap on total nodes (default 300) |
-| `--max-children <N>` | Siblings beyond this fold into `+N more` (default 20) |
+| `--max-nodes <N>` | Cap on total nodes (default `300`) |
+| `--max-children <N>` | Siblings beyond this fold into a `+N more` node (default `20`) |
 | `--no-synthesize` | Drop rows with missing ancestors instead of inferring them |
-| `--title <T>` | Title shown above the diagram |
+| `--title <TEXT>` | Title shown above the diagram |
+| `-f, --format <mermaid\|md\|html>` | Output format (default `mermaid`) |
+| `-o, --output <FILE>` | Write to a file instead of stdout |
 
-## Connecting
+`--format md` wraps the flowchart in a fenced ` ```mermaid ` block for pasting
+into Markdown. `--format html` emits a self-contained interactive page with a
+collapsible tree.
 
-Connection details are resolved in this order:
+## Connecting to a database
 
-1. `--dsn <URL>` (also reads from the `DATABASE_URL` env var)
-2. `DATABASE_URL`
-3. The libpq `PG*` variables — `PGHOST`, `PGPORT`, `PGUSER`, `PGPASSWORD`, `PGDATABASE`
+Connection details are resolved in this order — the first one that is set wins:
 
-The first source that yields a connection string wins. The session is opened
-**read-only** with a 30-second statement timeout; the crate has no write path at
-all. TLS is negotiated automatically (so managed providers like Neon, Supabase,
-and RDS work out of the box) and falls back to plaintext for a local database
-that does not offer it.
+1. **`--dsn <URL>`** on the command line
+2. **`DATABASE_URL`** in the environment
+3. the standard libpq **`PG*`** variables (`PGHOST`, `PGPORT`, `PGUSER`,
+   `PGPASSWORD`, `PGDATABASE`)
+
+```sh
+ltree2mmd --dsn 'postgres://user:pass@host/db' --table catalog
+DATABASE_URL='postgres://user:pass@host/db' ltree2mmd --table catalog
+PGHOST=host PGUSER=user PGDATABASE=db ltree2mmd --table catalog
+```
+
+The session is opened `READ ONLY` with a 30-second statement timeout, and the
+crate forbids `unsafe` and contains no write path at all. Managed providers
+(Neon, Supabase, RDS, …) are reached over TLS using the platform trust store;
+for a local plaintext server, add `?sslmode=disable` to the URL.
 
 ## Size guards and truncation
 
-Big trees turn Mermaid into an unreadable grey blob, so two guards keep the
-output legible — and both announce themselves on stderr rather than clipping
-silently:
+Mermaid turns into an unreadable grey blob past a few hundred nodes, so two
+guards keep the diagram legible. **Both are reported loudly on stderr** — a
+clipped tree never silently passes for a complete one:
 
-- **`--max-children`** folds each sibling list down to the limit, replacing the
-  remainder with a single `+N more` node.
-- **`--max-nodes`** caps the total node count, keeping a breadth-first slice so
-  the surviving diagram is a shallow view of the whole tree rather than one deep
-  branch.
+- **`--max-children`** (default 20): once a node has more than this many
+  siblings, the extras collapse into a single dashed `+N more` node.
+- **`--max-nodes`** (default 300): children are folded first, then the tree is
+  cut breadth-first to this many nodes, keeping a shallow overview rather than
+  one deep branch.
 
-```console
-$ printf 'r.a\nr.b\nr.c\nr.d\nr.e\n' | ltree2mmd - --max-children 2
-truncated: folded 3 sibling(s) into "+N more" nodes     # ← stderr
 ```
-```mermaid
-flowchart TD
-    n0["r"]
-    n1["a"]
-    n2["b"]
-    n3["+3 more"]
-    n0 --> n1
-    n0 --> n2
-    n0 --> n3
-classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
-class n0,n3 inferred
+$ ltree2mmd --table big_catalog --max-nodes 100
+truncated: folded 4120 sibling(s) into "+N more" nodes; dropped 380 node(s) past the node limit
 ```
 
-The `+N more` node is dashed, for the same reason as the next section.
+Raise the limits when you want the whole thing: `--max-nodes 100000
+--max-children 100000`.
 
 ## Synthesized ancestors (the dashed nodes)
 
-`ltree` rows can name a deep path whose intermediate ancestors have no row of
-their own. By default ltree2mmd **synthesizes** those ancestors so the tree
-stays connected, and styles them dashed to mark that they were inferred rather
-than read from the table:
+`ltree` stores a full path per row, but the intermediate rows need not exist. If
+`Fruits.Apple` is present but `Fruits` is not, ltree2mmd **synthesizes** the
+missing `Fruits` node so the tree still connects — and marks it dashed, so an
+inferred node is never mistaken for one that was actually read:
 
-```console
-$ printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' | ltree2mmd -
-```
 ```mermaid
 flowchart TD
     n0["Fruits"]
@@ -175,15 +163,17 @@ classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
 class n0,n3,n4,n6 inferred
 ```
 
-`Fruits`, `Grains`, `Rice`, and `Vegetables` are dashed: no row carried them.
-Pass `--no-synthesize` to drop such rows instead (each is reported on stderr).
+That was produced by:
 
-## Install
-
-```console
-$ cargo install --path .
+```sh
+printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' | ltree2mmd -
 ```
+
+`Fruits`, `Vegetables`, `Grains`, and `Rice` are all dashed — no row carried
+them. The `+N more` collapse nodes from the size guards are drawn the same way,
+for the same reason. Pass `--no-synthesize` to drop rows with missing ancestors
+(and get a warning for each) instead.
 
 ## License
 
-MIT OR Apache-2.0
+MIT OR Apache-2.0.

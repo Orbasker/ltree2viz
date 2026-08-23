@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      # Throwaway local demo database; trust auth avoids baking a password in.
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_DB: demo
+    volumes:
+      - ./demo/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d demo"]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  ltree2mmd:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://postgres@db:5432/demo?sslmode=disable
+    command: ["--table", "catalog", "--label-column", "name", "--title", "catalog", "--format", "md"]
