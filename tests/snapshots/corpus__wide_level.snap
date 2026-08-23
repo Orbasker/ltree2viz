@@ -1,0 +1,506 @@
+---
+source: tests/corpus.rs
+expression: render_paths(&paths)
+---
+flowchart TD
+    n0["team"]
+    n1["member000"]
+    n2["member001"]
+    n3["member002"]
+    n4["member003"]
+    n5["member004"]
+    n6["member005"]
+    n7["member006"]
+    n8["member007"]
+    n9["member008"]
+    n10["member009"]
+    n11["member010"]
+    n12["member011"]
+    n13["member012"]
+    n14["member013"]
+    n15["member014"]
+    n16["member015"]
+    n17["member016"]
+    n18["member017"]
+    n19["member018"]
+    n20["member019"]
+    n21["member020"]
+    n22["member021"]
+    n23["member022"]
+    n24["member023"]
+    n25["member024"]
+    n26["member025"]
+    n27["member026"]
+    n28["member027"]
+    n29["member028"]
+    n30["member029"]
+    n31["member030"]
+    n32["member031"]
+    n33["member032"]
+    n34["member033"]
+    n35["member034"]
+    n36["member035"]
+    n37["member036"]
+    n38["member037"]
+    n39["member038"]
+    n40["member039"]
+    n41["member040"]
+    n42["member041"]
+    n43["member042"]
+    n44["member043"]
+    n45["member044"]
+    n46["member045"]
+    n47["member046"]
+    n48["member047"]
+    n49["member048"]
+    n50["member049"]
+    n51["member050"]
+    n52["member051"]
+    n53["member052"]
+    n54["member053"]
+    n55["member054"]
+    n56["member055"]
+    n57["member056"]
+    n58["member057"]
+    n59["member058"]
+    n60["member059"]
+    n61["member060"]
+    n62["member061"]
+    n63["member062"]
+    n64["member063"]
+    n65["member064"]
+    n66["member065"]
+    n67["member066"]
+    n68["member067"]
+    n69["member068"]
+    n70["member069"]
+    n71["member070"]
+    n72["member071"]
+    n73["member072"]
+    n74["member073"]
+    n75["member074"]
+    n76["member075"]
+    n77["member076"]
+    n78["member077"]
+    n79["member078"]
+    n80["member079"]
+    n81["member080"]
+    n82["member081"]
+    n83["member082"]
+    n84["member083"]
+    n85["member084"]
+    n86["member085"]
+    n87["member086"]
+    n88["member087"]
+    n89["member088"]
+    n90["member089"]
+    n91["member090"]
+    n92["member091"]
+    n93["member092"]
+    n94["member093"]
+    n95["member094"]
+    n96["member095"]
+    n97["member096"]
+    n98["member097"]
+    n99["member098"]
+    n100["member099"]
+    n101["member100"]
+    n102["member101"]
+    n103["member102"]
+    n104["member103"]
+    n105["member104"]
+    n106["member105"]
+    n107["member106"]
+    n108["member107"]
+    n109["member108"]
+    n110["member109"]
+    n111["member110"]
+    n112["member111"]
+    n113["member112"]
+    n114["member113"]
+    n115["member114"]
+    n116["member115"]
+    n117["member116"]
+    n118["member117"]
+    n119["member118"]
+    n120["member119"]
+    n121["member120"]
+    n122["member121"]
+    n123["member122"]
+    n124["member123"]
+    n125["member124"]
+    n126["member125"]
+    n127["member126"]
+    n128["member127"]
+    n129["member128"]
+    n130["member129"]
+    n131["member130"]
+    n132["member131"]
+    n133["member132"]
+    n134["member133"]
+    n135["member134"]
+    n136["member135"]
+    n137["member136"]
+    n138["member137"]
+    n139["member138"]
+    n140["member139"]
+    n141["member140"]
+    n142["member141"]
+    n143["member142"]
+    n144["member143"]
+    n145["member144"]
+    n146["member145"]
+    n147["member146"]
+    n148["member147"]
+    n149["member148"]
+    n150["member149"]
+    n151["member150"]
+    n152["member151"]
+    n153["member152"]
+    n154["member153"]
+    n155["member154"]
+    n156["member155"]
+    n157["member156"]
+    n158["member157"]
+    n159["member158"]
+    n160["member159"]
+    n161["member160"]
+    n162["member161"]
+    n163["member162"]
+    n164["member163"]
+    n165["member164"]
+    n166["member165"]
+    n167["member166"]
+    n168["member167"]
+    n169["member168"]
+    n170["member169"]
+    n171["member170"]
+    n172["member171"]
+    n173["member172"]
+    n174["member173"]
+    n175["member174"]
+    n176["member175"]
+    n177["member176"]
+    n178["member177"]
+    n179["member178"]
+    n180["member179"]
+    n181["member180"]
+    n182["member181"]
+    n183["member182"]
+    n184["member183"]
+    n185["member184"]
+    n186["member185"]
+    n187["member186"]
+    n188["member187"]
+    n189["member188"]
+    n190["member189"]
+    n191["member190"]
+    n192["member191"]
+    n193["member192"]
+    n194["member193"]
+    n195["member194"]
+    n196["member195"]
+    n197["member196"]
+    n198["member197"]
+    n199["member198"]
+    n200["member199"]
+    n201["member200"]
+    n202["member201"]
+    n203["member202"]
+    n204["member203"]
+    n205["member204"]
+    n206["member205"]
+    n207["member206"]
+    n208["member207"]
+    n209["member208"]
+    n210["member209"]
+    n211["member210"]
+    n212["member211"]
+    n213["member212"]
+    n214["member213"]
+    n215["member214"]
+    n216["member215"]
+    n217["member216"]
+    n218["member217"]
+    n219["member218"]
+    n220["member219"]
+    n221["member220"]
+    n222["member221"]
+    n223["member222"]
+    n224["member223"]
+    n225["member224"]
+    n226["member225"]
+    n227["member226"]
+    n228["member227"]
+    n229["member228"]
+    n230["member229"]
+    n231["member230"]
+    n232["member231"]
+    n233["member232"]
+    n234["member233"]
+    n235["member234"]
+    n236["member235"]
+    n237["member236"]
+    n238["member237"]
+    n239["member238"]
+    n240["member239"]
+    n241["member240"]
+    n242["member241"]
+    n243["member242"]
+    n244["member243"]
+    n245["member244"]
+    n246["member245"]
+    n247["member246"]
+    n248["member247"]
+    n249["member248"]
+    n250["member249"]
+    n0 --> n1
+    n0 --> n2
+    n0 --> n3
+    n0 --> n4
+    n0 --> n5
+    n0 --> n6
+    n0 --> n7
+    n0 --> n8
+    n0 --> n9
+    n0 --> n10
+    n0 --> n11
+    n0 --> n12
+    n0 --> n13
+    n0 --> n14
+    n0 --> n15
+    n0 --> n16
+    n0 --> n17
+    n0 --> n18
+    n0 --> n19
+    n0 --> n20
+    n0 --> n21
+    n0 --> n22
+    n0 --> n23
+    n0 --> n24
+    n0 --> n25
+    n0 --> n26
+    n0 --> n27
+    n0 --> n28
+    n0 --> n29
+    n0 --> n30
+    n0 --> n31
+    n0 --> n32
+    n0 --> n33
+    n0 --> n34
+    n0 --> n35
+    n0 --> n36
+    n0 --> n37
+    n0 --> n38
+    n0 --> n39
+    n0 --> n40
+    n0 --> n41
+    n0 --> n42
+    n0 --> n43
+    n0 --> n44
+    n0 --> n45
+    n0 --> n46
+    n0 --> n47
+    n0 --> n48
+    n0 --> n49
+    n0 --> n50
+    n0 --> n51
+    n0 --> n52
+    n0 --> n53
+    n0 --> n54
+    n0 --> n55
+    n0 --> n56
+    n0 --> n57
+    n0 --> n58
+    n0 --> n59
+    n0 --> n60
+    n0 --> n61
+    n0 --> n62
+    n0 --> n63
+    n0 --> n64
+    n0 --> n65
+    n0 --> n66
+    n0 --> n67
+    n0 --> n68
+    n0 --> n69
+    n0 --> n70
+    n0 --> n71
+    n0 --> n72
+    n0 --> n73
+    n0 --> n74
+    n0 --> n75
+    n0 --> n76
+    n0 --> n77
+    n0 --> n78
+    n0 --> n79
+    n0 --> n80
+    n0 --> n81
+    n0 --> n82
+    n0 --> n83
+    n0 --> n84
+    n0 --> n85
+    n0 --> n86
+    n0 --> n87
+    n0 --> n88
+    n0 --> n89
+    n0 --> n90
+    n0 --> n91
+    n0 --> n92
+    n0 --> n93
+    n0 --> n94
+    n0 --> n95
+    n0 --> n96
+    n0 --> n97
+    n0 --> n98
+    n0 --> n99
+    n0 --> n100
+    n0 --> n101
+    n0 --> n102
+    n0 --> n103
+    n0 --> n104
+    n0 --> n105
+    n0 --> n106
+    n0 --> n107
+    n0 --> n108
+    n0 --> n109
+    n0 --> n110
+    n0 --> n111
+    n0 --> n112
+    n0 --> n113
+    n0 --> n114
+    n0 --> n115
+    n0 --> n116
+    n0 --> n117
+    n0 --> n118
+    n0 --> n119
+    n0 --> n120
+    n0 --> n121
+    n0 --> n122
+    n0 --> n123
+    n0 --> n124
+    n0 --> n125
+    n0 --> n126
+    n0 --> n127
+    n0 --> n128
+    n0 --> n129
+    n0 --> n130
+    n0 --> n131
+    n0 --> n132
+    n0 --> n133
+    n0 --> n134
+    n0 --> n135
+    n0 --> n136
+    n0 --> n137
+    n0 --> n138
+    n0 --> n139
+    n0 --> n140
+    n0 --> n141
+    n0 --> n142
+    n0 --> n143
+    n0 --> n144
+    n0 --> n145
+    n0 --> n146
+    n0 --> n147
+    n0 --> n148
+    n0 --> n149
+    n0 --> n150
+    n0 --> n151
+    n0 --> n152
+    n0 --> n153
+    n0 --> n154
+    n0 --> n155
+    n0 --> n156
+    n0 --> n157
+    n0 --> n158
+    n0 --> n159
+    n0 --> n160
+    n0 --> n161
+    n0 --> n162
+    n0 --> n163
+    n0 --> n164
+    n0 --> n165
+    n0 --> n166
+    n0 --> n167
+    n0 --> n168
+    n0 --> n169
+    n0 --> n170
+    n0 --> n171
+    n0 --> n172
+    n0 --> n173
+    n0 --> n174
+    n0 --> n175
+    n0 --> n176
+    n0 --> n177
+    n0 --> n178
+    n0 --> n179
+    n0 --> n180
+    n0 --> n181
+    n0 --> n182
+    n0 --> n183
+    n0 --> n184
+    n0 --> n185
+    n0 --> n186
+    n0 --> n187
+    n0 --> n188
+    n0 --> n189
+    n0 --> n190
+    n0 --> n191
+    n0 --> n192
+    n0 --> n193
+    n0 --> n194
+    n0 --> n195
+    n0 --> n196
+    n0 --> n197
+    n0 --> n198
+    n0 --> n199
+    n0 --> n200
+    n0 --> n201
+    n0 --> n202
+    n0 --> n203
+    n0 --> n204
+    n0 --> n205
+    n0 --> n206
+    n0 --> n207
+    n0 --> n208
+    n0 --> n209
+    n0 --> n210
+    n0 --> n211
+    n0 --> n212
+    n0 --> n213
+    n0 --> n214
+    n0 --> n215
+    n0 --> n216
+    n0 --> n217
+    n0 --> n218
+    n0 --> n219
+    n0 --> n220
+    n0 --> n221
+    n0 --> n222
+    n0 --> n223
+    n0 --> n224
+    n0 --> n225
+    n0 --> n226
+    n0 --> n227
+    n0 --> n228
+    n0 --> n229
+    n0 --> n230
+    n0 --> n231
+    n0 --> n232
+    n0 --> n233
+    n0 --> n234
+    n0 --> n235
+    n0 --> n236
+    n0 --> n237
+    n0 --> n238
+    n0 --> n239
+    n0 --> n240
+    n0 --> n241
+    n0 --> n242
+    n0 --> n243
+    n0 --> n244
+    n0 --> n245
+    n0 --> n246
+    n0 --> n247
+    n0 --> n248
+    n0 --> n249
+    n0 --> n250

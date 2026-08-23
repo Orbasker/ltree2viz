@@ -1,0 +1,19 @@
+---
+source: tests/corpus.rs
+expression: render_paths(&paths)
+---
+flowchart TD
+    n0["a"]
+    n1["b"]
+    n2["c"]
+    n3["d"]
+    n4["x"]
+    n5["y"]
+    n6["z"]
+    n0 --> n1
+    n1 --> n2
+    n1 --> n3
+    n4 --> n5
+    n5 --> n6
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0,n1,n4,n5 inferred

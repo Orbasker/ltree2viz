@@ -1,0 +1,18 @@
+---
+source: tests/corpus.rs
+expression: render_paths(&paths)
+---
+flowchart TD
+    n0["class"]
+    n1["o"]
+    n2["x"]
+    n3["end"]
+    n4["child"]
+    n5["graph"]
+    n6["end"]
+    n0 --> n1
+    n1 --> n2
+    n3 --> n4
+    n5 --> n6
+classDef inferred stroke-dasharray:5 5,stroke:#999,color:#666,fill:#f4f4f4;
+class n0,n1,n5 inferred

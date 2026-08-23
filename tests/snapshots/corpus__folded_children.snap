@@ -1,0 +1,48 @@
+---
+source: tests/corpus.rs
+expression: out
+---
+flowchart TD
+    n0["team"]
+    n1["member000"]
+    n2["member001"]
+    n3["member002"]
+    n4["member003"]
+    n5["member004"]
+    n6["member005"]
+    n7["member006"]
+    n8["member007"]
+    n9["member008"]
+    n10["member009"]
+    n11["member010"]
+    n12["member011"]
+    n13["member012"]
+    n14["member013"]
+    n15["member014"]
+    n16["member015"]
+    n17["member016"]
+    n18["member017"]
+    n19["member018"]
+    n20["member019"]
+    n21["+10 more"]
+    n0 --> n1
+    n0 --> n2
+    n0 --> n3
+    n0 --> n4
+    n0 --> n5
+    n0 --> n6
+    n0 --> n7
+    n0 --> n8
+    n0 --> n9
+    n0 --> n10
+    n0 --> n11
+    n0 --> n12
+    n0 --> n13
+    n0 --> n14
+    n0 --> n15
+    n0 --> n16
+    n0 --> n17
+    n0 --> n18
+    n0 --> n19
+    n0 --> n20
+    n0 --> n21
