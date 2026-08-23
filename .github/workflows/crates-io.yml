@@ -1,0 +1,40 @@
+# Custom `dist` publish job: uploads the crate to crates.io once the release
+# binaries have all been built and attached.
+name: Publish to crates.io
+
+on:
+  workflow_call:
+    inputs:
+      plan:
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          submodules: recursive
+
+      - name: Install Rust
+        run: rustup update stable --no-self-update && rustup default stable
+
+      # The tag drives the release, so a Cargo.toml left at the previous
+      # version would silently publish the wrong thing.
+      - name: Check the tag matches the crate version
+        env:
+          PLAN: ${{ inputs.plan }}
+        run: |
+          tag_version="$(echo "$PLAN" | jq -r '.announcement_tag' | sed 's/^v//')"
+          crate_version="$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')"
+          if [ "$tag_version" != "$crate_version" ]; then
+            echo "tag is v$tag_version but Cargo.toml says $crate_version" >&2
+            exit 1
+          fi
+
+      - name: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish --locked

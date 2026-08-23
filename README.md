@@ -59,8 +59,25 @@ to see the picture.
 ## Install
 
 ```sh
-cargo install --path .
+cargo install ltree2mmd
 ```
+
+Prebuilt binaries for macOS (arm64, x64), Linux (x64, arm64), and Windows (x64)
+are attached to every
+[release](https://github.com/Orbasker/ltree2mmd/releases), so you do not need a
+Rust toolchain:
+
+```sh
+# macOS / Linux
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.sh | sh
+```
+
+```powershell
+# Windows
+powershell -c "irm https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.ps1 | iex"
+```
+
+Or from a clone: `cargo install --path .`
 
 ## Usage
 
@@ -174,6 +191,27 @@ them. The `+N more` collapse nodes from the size guards are drawn the same way,
 for the same reason. Pass `--no-synthesize` to drop rows with missing ancestors
 (and get a warning for each) instead.
 
+## Requirements
+
+- Postgres with the `ltree` extension installed. It does not need to be on your
+  `search_path` — the query casts the path column to `text`, so any schema
+  works.
+- Rust 1.85 or newer to build from source. Prebuilt binaries need nothing.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the dev setup, how to run the
+Postgres-backed tests, and the release procedure.
+
 ## License
 
-MIT OR Apache-2.0.
+Dual-licensed under either of
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE))
+- MIT license ([LICENSE-MIT](LICENSE-MIT))
+
+at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in this crate by you, as defined in the Apache-2.0 licence, shall
+be dual-licensed as above, without any additional terms or conditions.

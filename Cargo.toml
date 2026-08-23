@@ -2,11 +2,17 @@
 name = "ltree2mmd"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 description = "Turn a Postgres ltree table into a Mermaid diagram"
 repository = "https://github.com/Orbasker/ltree2mmd"
+readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["postgres", "ltree", "mermaid", "diagram", "cli"]
 categories = ["command-line-utilities", "visualization"]
+
+[features]
+# Statically link OpenSSL so released binaries do not depend on the host libssl.
+vendored-tls = ["native-tls/vendored"]
 
 [dependencies]
 anyhow = "1.0.104"
@@ -21,3 +27,8 @@ insta = "1.48.0"
 
 [lints.rust]
 unsafe_code = "forbid"
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
