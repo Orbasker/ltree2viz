@@ -89,6 +89,14 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/Orbasker/ltree2mmd/rele
 powershell -c "irm https://github.com/Orbasker/ltree2mmd/releases/latest/download/ltree2mmd-installer.ps1 | iex"
 ```
 
+On macOS or Linuxbrew, install the prebuilt binary through Homebrew (no Rust
+toolchain needed):
+
+```sh
+brew tap Orbasker/tap
+brew install ltree2mmd
+```
+
 Or from a clone: `cargo install --path .`
 
 ## Usage

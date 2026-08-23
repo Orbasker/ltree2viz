@@ -18,9 +18,13 @@ features = ["vendored-tls"]
 # Whether to install an updater program
 install-updater = false
 # Publish jobs to run in CI
-publish-jobs = ["./crates-io", "./npm"]
+publish-jobs = ["homebrew", "./crates-io", "./npm"]
 # Path that installers should place binaries in
 install-path = "CARGO_HOME"
+# A GitHub repo to push Homebrew formulas to
+tap = "Orbasker/homebrew-tap"
+# Customize the Homebrew formula name
+formula = "ltree2mmd"
 
 # Native ARM runner: cross-compiling for aarch64 Linux is not worth it.
 [dist.github-custom-runners]
