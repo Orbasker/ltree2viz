@@ -1,0 +1,12 @@
+Electronics
+Electronics.Computers
+Electronics.Computers.Laptops
+Electronics.Computers.Desktops
+Electronics.Phones
+Electronics.Phones.Android
+Electronics.Phones.iOS
+Home
+Home.Kitchen
+Home.Kitchen.Cookware
+Home.Garden
+Home.Garden.Tools
