@@ -1,15 +1,43 @@
-use anyhow::Result;
+use std::io::{self, Read, Write};
+use std::path::Path;
+use std::process::ExitCode;
+
+use anyhow::{Context, Result, bail};
 use clap::Parser;
 
-use ltree2mmd::cli::{Args, Command};
+use ltree2mmd::cli::{Args, Command, Format};
+use ltree2mmd::core::limits::{Limits, apply};
+use ltree2mmd::core::path::LtreePath;
+use ltree2mmd::core::render::flowchart::{Options, render};
+use ltree2mmd::core::tree::{MissingAncestors, Row, build};
+use ltree2mmd::db::fetch::{Filter, fetch};
 use ltree2mmd::db::{connect, introspect};
 
-fn main() -> Result<()> {
+const STDIN_ARG: &str = "-";
+
+fn main() -> ExitCode {
     let args = Args::parse();
 
-    match args.command {
-        Some(Command::Tables) => run_tables(&args),
-        None => todo!(),
+    match run(&args) {
+        Ok(()) => ExitCode::SUCCESS,
+        Err(error) => {
+            eprintln!("error: {error:#}");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+fn run(args: &Args) -> Result<()> {
+    match &args.command {
+        Some(Command::Tables) => run_tables(args),
+        None => match args.input.as_deref() {
+            Some(STDIN_ARG) => run_stdin(args),
+            Some(other) => bail!(
+                "unexpected argument {other:?}; pass `-` to read paths from stdin, \
+                 or --table <TABLE> to read from a database"
+            ),
+            None => run_database(args),
+        },
     }
 }
 
@@ -24,6 +52,110 @@ fn run_tables(args: &Args) -> Result<()> {
 
     for column in columns {
         println!("{column}");
+    }
+    Ok(())
+}
+
+/// Reads newline-delimited paths from stdin and renders them with no database.
+fn run_stdin(args: &Args) -> Result<()> {
+    let mut text = String::new();
+    io::stdin()
+        .read_to_string(&mut text)
+        .context("reading paths from stdin")?;
+
+    let rows = parse_paths(&text)?;
+    render_rows(rows, args)
+}
+
+/// Parses one path per non-blank line, reporting the line that fails.
+fn parse_paths(text: &str) -> Result<Vec<Row>> {
+    let mut rows = Vec::new();
+    for (number, line) in text.lines().enumerate() {
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+        let path = LtreePath::parse(line)
+            .with_context(|| format!("line {}: invalid path {line:?}", number + 1))?;
+        rows.push(Row { path, label: None });
+    }
+    Ok(rows)
+}
+
+fn run_database(args: &Args) -> Result<()> {
+    let Some(table) = args.table.as_deref() else {
+        bail!(
+            "no input selected: pass --table <TABLE> to read from a database, \
+             `-` to read paths from stdin, or run `ltree2mmd tables` to discover \
+             ltree columns. See --help for details."
+        );
+    };
+
+    let mut client = connect::connect(args.dsn.as_deref())?;
+    let column = introspect::resolve_column(&mut client, table, args.path_column.as_deref())?;
+    let filter = Filter {
+        root: args.root.clone(),
+        depth: args.depth,
+    };
+    let rows = fetch(&mut client, &column, args.label_column.as_deref(), &filter)?;
+
+    render_rows(rows, args)
+}
+
+/// The shared core pipeline: build the tree, apply limits, render, and write.
+///
+/// Every diagnostic goes to stderr so the rendered diagram on stdout (or in
+/// `--output`) stays clean.
+fn render_rows(rows: Vec<Row>, args: &Args) -> Result<()> {
+    let missing = if args.no_synthesize {
+        MissingAncestors::Drop
+    } else {
+        MissingAncestors::Synthesize
+    };
+
+    let mut tree = build(rows, missing);
+    for warning in &tree.warnings {
+        eprintln!("warning: {warning}");
+    }
+
+    let limits = Limits {
+        max_nodes: args.max_nodes,
+        max_children: args.max_children,
+    };
+    let truncation = apply(&mut tree, limits);
+    if let Some(summary) = truncation.summary() {
+        eprintln!("{summary}");
+    }
+
+    let options = Options {
+        direction: args.direction.into(),
+        title: args.title.clone(),
+    };
+    let diagram = render(&tree, &truncation, &options);
+    let document = wrap(diagram, args.format);
+
+    write_output(&document, args.output.as_deref())
+}
+
+/// Wraps the flowchart in a fenced ```` ```mermaid ```` block for `--format md`.
+fn wrap(diagram: String, format: Format) -> String {
+    match format {
+        Format::Mermaid => diagram,
+        Format::Md => format!("```mermaid\n{diagram}```\n"),
+    }
+}
+
+fn write_output(document: &str, output: Option<&Path>) -> Result<()> {
+    match output {
+        Some(path) => {
+            std::fs::write(path, document)
+                .with_context(|| format!("writing output to {}", path.display()))?;
+        }
+        None => {
+            io::stdout()
+                .write_all(document.as_bytes())
+                .context("writing output to stdout")?;
+        }
     }
     Ok(())
 }
