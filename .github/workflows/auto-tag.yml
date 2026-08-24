@@ -1,0 +1,40 @@
+name: Auto-tag release
+
+# On merge to main, push a vX.Y.Z tag matching Cargo.toml's version (if it
+# doesn't exist yet). That tag push triggers the Release workflow. The version
+# level (major/minor/patch) is decided in the PR per AGENTS.md.
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          # A PAT (repo scope) is required so the tag push triggers the
+          # Release workflow. Tags pushed with the default GITHUB_TOKEN do not
+          # start new workflow runs. Store it as the RELEASE_PAT secret.
+          token: ${{ secrets.RELEASE_PAT }}
+      - name: Tag Cargo.toml version if new
+        run: |
+          set -euo pipefail
+          ver="$(grep -m1 '^version' Cargo.toml | sed -E 's/.*"([^"]+)".*/\1/')"
+          tag="v${ver}"
+          if git ls-remote --exit-code --tags origin "refs/tags/${tag}" >/dev/null 2>&1; then
+            echo "Tag ${tag} already exists — nothing to do."
+            exit 0
+          fi
+          git tag "${tag}"
+          git push origin "${tag}"
+          echo "Pushed ${tag}, Release workflow will run."
