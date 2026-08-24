@@ -131,6 +131,31 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   .node--match text { fill: #ffe9a8; }
   .node--dim { opacity: 0.22; }
   .link--dim { opacity: 0.12; }
+  .node--path circle { fill: #b18cff; stroke: #d9c6ff; }
+  .node--path text { fill: #e5d8ff; }
+  .node--source circle { fill: #35c46a; stroke: #eafff2; stroke-width: 3px; }
+  .node--target circle { fill: #ff5c8a; stroke: #ffe0ea; stroke-width: 3px; }
+  .link--path { stroke: #b18cff; stroke-width: 2.5px; opacity: 1; }
+  #pathbar { position: fixed; left: 0; right: 0; bottom: 0; min-height: 34px; display: none;
+    align-items: center; gap: 10px; padding: 6px 12px; background: #252526;
+    border-top: 1px solid #3a3a3a; z-index: 10; box-sizing: border-box; font-size: 12px; }
+  #pathbar.show { display: flex; }
+  #crumb { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+  #crumb .seg { color: #cfe3ff; cursor: pointer; white-space: nowrap; }
+  #crumb .seg:hover { text-decoration: underline; }
+  #crumb .sep { color: #666; }
+  #hops { color: #b18cff; font-weight: 600; white-space: nowrap; }
+  #pathbar .spacer { margin-left: auto; }
+  #pathlist { position: fixed; top: 52px; right: 12px; width: 340px; max-height: calc(100vh - 110px);
+    display: none; flex-direction: column; background: #252526; border: 1px solid #3a3a3a;
+    border-radius: 6px; z-index: 11; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
+  #pathlist.show { display: flex; }
+  #pathlist .ph { display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+    border-bottom: 1px solid #3a3a3a; }
+  #pathlist .spacer { margin-left: auto; }
+  #plitems { list-style: decimal; margin: 0; padding: 6px 10px 8px 28px; overflow: auto; }
+  #plitems li { margin: 3px 0; cursor: pointer; color: #cfe3ff; }
+  #plitems li:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -155,6 +180,7 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
     <button id="prev" title="Previous match (Shift+Enter)">‹</button>
     <button id="next" title="Next match (Enter)">›</button>
     <span id="count"></span>
+    <button id="paths" title="List paths of current matches">≡ Paths</button>
   </span>
   <span id="legend">
     <span><i style="background:#35c46a"></i>root</span>
@@ -162,9 +188,21 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
     <span><i style="background:#2d6db5"></i>collapsed</span>
     <span><i style="background:#f0a13a"></i>leaf</span>
   </span>
-  <span id="hint">Click a node to expand/collapse · scroll to zoom · drag to pan · / to search</span>
+  <span id="hint">Click: expand/collapse · Shift-click: pick path source/target · scroll zoom · drag pan · / search</span>
 </div>
 <svg></svg>
+<div id="pathlist">
+  <div class="ph"><strong>Match paths</strong><span class="spacer"></span>
+    <button id="copyAll">Copy all</button><button id="closeList">✕</button></div>
+  <ol id="plitems"></ol>
+</div>
+<div id="pathbar">
+  <span id="crumb"></span>
+  <span id="hops"></span>
+  <span class="spacer"></span>
+  <button id="copyPath">Copy path</button>
+  <button id="clearPath" title="Clear path (Esc)">✕</button>
+</div>
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
 const DATA = {{DATA}};
@@ -236,6 +274,105 @@ let savedState = null;
 
 function walkAll(fn) { (function rec(d) { fn(d); if (d._children) d._children.forEach(rec); })(root); }
 
+// Path state. `pathSource`/`pathTarget` are the two shift-clicked endpoints and
+// `pathIds` holds the ids of every node on the highlighted path (root→node for a
+// single selection, source→LCA→target for a pair). `currentCrumb` is the string
+// the Copy button writes.
+let pathSource = null;
+let pathTarget = null;
+let pathIds = new Set();
+let currentCrumb = "";
+
+// Node labels from the root down to `d`, skipping the virtual root.
+function crumbLabels(d) {
+  return d.ancestors().reverse().filter(n => !n.data.virtual).map(n => n.data.name);
+}
+
+// Ensures every node in `nodes` is visible by expanding its ancestors.
+function revealNodes(nodes) {
+  nodes.forEach(d => { for (let p = d.parent; p; p = p.parent) p.children = p._children; });
+}
+
+function renderCrumb(target, hops) {
+  const crumb = document.getElementById("crumb");
+  crumb.innerHTML = "";
+  const chain = target.ancestors().reverse().filter(n => !n.data.virtual);
+  currentCrumb = chain.map(n => n.data.name).join(" › ");
+  chain.forEach((n, i) => {
+    if (i > 0) {
+      const sep = document.createElement("span");
+      sep.className = "sep"; sep.textContent = "›";
+      crumb.appendChild(sep);
+    }
+    const seg = document.createElement("span");
+    seg.className = "seg"; seg.textContent = n.data.name;
+    seg.onclick = () => { revealNodes([n]); update(root); centerOn(n); };
+    crumb.appendChild(seg);
+  });
+  document.getElementById("hops").textContent =
+    hops == null ? "" : `${hops} hop${hops === 1 ? "" : "s"}`;
+  document.getElementById("pathbar").classList.add("show");
+}
+
+// First shift-click (or a click after a pair is set) selects a source and shows
+// its root→node path; the second selects a target and highlights the shortest
+// path between them via their lowest common ancestor.
+function selectForPath(d) {
+  if (!pathSource || pathTarget) {
+    pathSource = d;
+    pathTarget = null;
+    const chain = d.ancestors().reverse();
+    pathIds = new Set(chain.filter(n => !n.data.virtual).map(n => n.id));
+    revealNodes([d]);
+    update(root);
+    renderCrumb(d, null);
+    centerOn(d);
+  } else {
+    pathTarget = d;
+    const nodes = pathSource.path(pathTarget);
+    pathIds = new Set(nodes.filter(n => !n.data.virtual).map(n => n.id));
+    revealNodes(nodes);
+    update(root);
+    renderCrumb(pathTarget, nodes.length - 1);
+    centerOn(pathTarget);
+  }
+}
+
+function clearPath() {
+  pathSource = null; pathTarget = null; pathIds = new Set(); currentCrumb = "";
+  document.getElementById("pathbar").classList.remove("show");
+  applyStyles();
+}
+
+function copyText(text) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+// Lists the root→node path of every current search match; clicking a row reveals
+// and centers that match.
+function showMatchPaths() {
+  const items = document.getElementById("plitems");
+  items.innerHTML = "";
+  matches.forEach(m => {
+    const li = document.createElement("li");
+    li.textContent = crumbLabels(m).join(" › ");
+    li.onclick = () => { revealNodes([m]); update(root); centerOn(m); };
+    items.appendChild(li);
+  });
+  document.getElementById("pathlist").classList.toggle("show");
+}
+
 function update(source) {
   applyNodeSize();
   const nodes = root.descendants();
@@ -252,6 +389,7 @@ function update(source) {
     .attr("transform", `translate(${px(origin0)},${py(origin0)})`)
     .attr("fill-opacity", 0).attr("stroke-opacity", 0)
     .on("click", (event, d) => {
+      if (event.shiftKey && !d.data.virtual) { selectForPath(d); return; }
       d.children = d.children ? null : d._children;
       update(d);
     });
@@ -284,19 +422,30 @@ function update(source) {
     .attr("d", () => linkPath(origin, origin));
 
   root.eachBefore(d => { d.x0 = d.x; d.y0 = d.y; });
-  applySearchStyles();
+  applyStyles();
 }
 
-// Highlights matches, dims everything else, and marks the current match.
-// Re-run after every update() so click/expand redraws keep search styling.
-function applySearchStyles() {
-  const active = matches.length > 0;
+// Highlights search matches and the selected path, dims everything else, and
+// marks the current match plus the path source/target. Re-run after every
+// update() so click/expand redraws keep the styling.
+function applyStyles() {
+  const searchActive = matches.length > 0;
+  const pathActive = pathIds.size > 0;
   const current = matchIndex >= 0 ? matches[matchIndex] : null;
+  const onPath = d => pathActive && pathIds.has(d.id);
   gNode.selectAll("g.node")
-    .classed("node--match", d => active && d._match)
-    .classed("node--dim", d => active && !d._match)
-    .classed("node--current", d => d === current);
-  gLink.selectAll("path.link").classed("link--dim", () => active);
+    .classed("node--match", d => searchActive && d._match)
+    .classed("node--current", d => d === current)
+    .classed("node--path", d => onPath(d) && d !== pathSource && d !== pathTarget)
+    .classed("node--source", d => d === pathSource)
+    .classed("node--target", d => d === pathTarget)
+    .classed("node--dim", d => (searchActive || pathActive)
+      && !(searchActive && d._match) && !onPath(d));
+  gLink.selectAll("path.link")
+    .classed("link--path", d => pathActive && pathIds.has(d.source.id) && pathIds.has(d.target.id))
+    .classed("link--dim", d => pathActive
+      ? !(pathIds.has(d.source.id) && pathIds.has(d.target.id))
+      : searchActive);
 }
 
 function centerOn(d) {
@@ -362,7 +511,7 @@ function clearSearch() {
 function navigate(delta) {
   if (!matches.length) return;
   matchIndex = (matchIndex + delta + matches.length) % matches.length;
-  applySearchStyles();
+  applyStyles();
   updateCount();
   centerOn(matches[matchIndex]);
 }
@@ -410,8 +559,16 @@ searchInput.addEventListener("keydown", e => {
 });
 document.getElementById("next").onclick = () => navigate(1);
 document.getElementById("prev").onclick = () => navigate(-1);
+document.getElementById("paths").onclick = showMatchPaths;
+document.getElementById("closeList").onclick = () =>
+  document.getElementById("pathlist").classList.remove("show");
+document.getElementById("copyAll").onclick = () =>
+  copyText(matches.map(m => crumbLabels(m).join(" › ")).join("\n"));
+document.getElementById("copyPath").onclick = () => copyText(currentCrumb);
+document.getElementById("clearPath").onclick = clearPath;
 document.addEventListener("keydown", e => {
   if (e.key === "/" && e.target !== searchInput) { e.preventDefault(); searchInput.focus(); }
+  else if (e.key === "Escape" && e.target !== searchInput && pathIds.size) { e.preventDefault(); clearPath(); }
 });
 
 // Start with the first level open, fit once the initial layout exists.
