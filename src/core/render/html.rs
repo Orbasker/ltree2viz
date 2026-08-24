@@ -312,16 +312,32 @@ function updateCount() {
   else el.textContent = document.getElementById("q").value.trim() ? "0 matches" : "";
 }
 
+// Free search: the query is split on whitespace into tokens that must each
+// appear as a case-insensitive substring, in order. This skips gaps and
+// separators, so "mens ss tops" matches "MENS_SS_LS_TOPS". A single token
+// degrades to a plain substring match.
+function matchLabel(label, tokens) {
+  const hay = label.toLowerCase();
+  let from = 0;
+  for (const tok of tokens) {
+    const idx = hay.indexOf(tok, from);
+    if (idx < 0) return false;
+    from = idx + tok.length;
+  }
+  return true;
+}
+
 function runSearch() {
-  const q = document.getElementById("q").value.trim().toLowerCase();
-  if (!q) { clearSearch(); return; }
+  const raw = document.getElementById("q").value.trim();
+  if (!raw) { clearSearch(); return; }
+  const tokens = raw.toLowerCase().split(/\s+/).filter(Boolean);
   if (!savedState) {
     savedState = new Map();
     walkAll(d => savedState.set(d.id, d.children != null));
   }
   matches = [];
   walkAll(d => {
-    const hit = !d.data.virtual && d.data.name.toLowerCase().includes(q);
+    const hit = !d.data.virtual && matchLabel(d.data.name, tokens);
     d._match = hit;
     if (hit) matches.push(d);
   });
