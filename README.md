@@ -187,10 +187,10 @@ depth, orientation control, and shift-click path highlighting:
 </div>
 
 That is the actual `--format html` output for the same `catalog` hierarchy shown
-above — generated with the [demo](#try-it-in-30-seconds):
+above — the same data as [`demo/seed.sql`](demo/seed.sql):
 
 ```sh
-printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' \
+printf 'Top.Collections.Pictures.Astronomy\nTop.Hobbies.Amateur_Astronomy\nTop.Science.Astronomy.Astrophysics\nTop.Science.Astronomy.Cosmology\n' \
   | ltree2viz - --format html --title catalog -o catalog.html
 ```
 

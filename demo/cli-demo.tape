@@ -33,7 +33,7 @@ Sleep 3s
 Type "# Missing ancestors are synthesized so the tree always connects"
 Enter
 Sleep 800ms
-Type "printf 'Fruits.Apple\nVegetables.Carrot\n' | ltree2viz - --title catalog"
+Type "printf 'Fruits.Apple\nVegetables.Carrot\n' | ltree2viz - --title produce"
 Sleep 500ms
 Enter
 Sleep 3s
