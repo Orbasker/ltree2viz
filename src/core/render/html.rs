@@ -141,6 +141,14 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   <label>To level
     <select id="level"></select>
   </label>
+  <label>Orient
+    <select id="orient">
+      <option value="LR">Left → Right</option>
+      <option value="RL">Right → Left</option>
+      <option value="TB">Top → Bottom</option>
+      <option value="BT">Bottom → Top</option>
+    </select>
+  </label>
   <button id="fit">Fit</button>
   <span id="search">
     <input id="q" type="search" placeholder="Search nodes… (/)" autocomplete="off" spellcheck="false">
@@ -166,10 +174,38 @@ const g = svg.append("g");
 const gLink = g.append("g");
 const gNode = g.append("g");
 
-const dx = 24;      // vertical gap between siblings
-const dy = 220;     // horizontal gap between levels
-const tree = d3.tree().nodeSize([dx, dy]);
-const diagonal = d3.linkHorizontal().x(d => d.y).y(d => d.x);
+// Sibling / level gaps differ per axis: horizontal layouts stack siblings
+// tightly and spread levels wide; vertical layouts need the reverse so labels
+// (which run horizontally) do not collide.
+const GAP_H = [24, 220];   // [between siblings, between levels] when horizontal
+const GAP_V = [140, 90];   // ...when vertical
+let orient = "LR";         // LR, RL, TB, BT
+
+const tree = d3.tree();
+const horizontal = () => orient === "LR" || orient === "RL";
+function applyNodeSize() { tree.nodeSize(horizontal() ? GAP_H : GAP_V); }
+
+// Map d3's layout coordinates (d.x across siblings, d.y down the levels) onto
+// screen coordinates for the chosen orientation.
+const px = d => horizontal() ? (orient === "RL" ? -d.y : d.y) : d.x;
+const py = d => horizontal() ? d.x : (orient === "BT" ? -d.y : d.y);
+function linkPath(s, t) {
+  const gen = horizontal() ? d3.linkHorizontal() : d3.linkVertical();
+  return gen.x(px).y(py)({source: s, target: t});
+}
+function placeText(sel) {
+  if (horizontal()) {
+    sel.attr("dy", "0.31em")
+      .attr("x", d => (d._children || d.children) ? -9 : 9)
+      .attr("text-anchor", d => (d._children || d.children) ? "end" : "start");
+  } else {
+    // Label internal nodes on the parent side, leaves on the far side.
+    const near = orient === "TB" ? "-0.9em" : "1.5em";
+    const far = orient === "TB" ? "1.5em" : "-0.9em";
+    sel.attr("x", 0).attr("text-anchor", "middle")
+      .attr("dy", d => (d._children || d.children) ? near : far);
+  }
+}
 
 const root = d3.hierarchy(DATA);
 root.x0 = 0;
@@ -201,32 +237,29 @@ let savedState = null;
 function walkAll(fn) { (function rec(d) { fn(d); if (d._children) d._children.forEach(rec); })(root); }
 
 function update(source) {
+  applyNodeSize();
   const nodes = root.descendants();
   const links = root.links();
   tree(root);
 
-  let minX = Infinity, maxX = -Infinity;
-  root.each(d => { if (d.x < minX) minX = d.x; if (d.x > maxX) maxX = d.x; });
   const t = svg.transition().duration(250);
+  const origin0 = {x: source.x0, y: source.y0};
+  const origin = {x: source.x, y: source.y};
 
   const node = gNode.selectAll("g.node").data(nodes, d => d.id);
   const nodeEnter = node.enter().append("g")
     .attr("class", "node")
-    .attr("transform", d => `translate(${source.y0},${source.x0})`)
+    .attr("transform", `translate(${px(origin0)},${py(origin0)})`)
     .attr("fill-opacity", 0).attr("stroke-opacity", 0)
     .on("click", (event, d) => {
       d.children = d.children ? null : d._children;
       update(d);
     });
   nodeEnter.append("circle").attr("r", 5);
-  nodeEnter.append("text")
-    .attr("dy", "0.31em")
-    .attr("x", d => d._children ? -9 : 9)
-    .attr("text-anchor", d => d._children ? "end" : "start")
-    .text(d => d.data.name);
+  nodeEnter.append("text").text(d => d.data.name);
 
   node.merge(nodeEnter).transition(t)
-    .attr("transform", d => `translate(${d.y},${d.x})`)
+    .attr("transform", d => `translate(${px(d)},${py(d)})`)
     .attr("fill-opacity", 1).attr("stroke-opacity", 1)
     .attr("class", d => {
       let c = "node";
@@ -237,20 +270,18 @@ function update(source) {
       else c += " node--real";
       return c;
     });
-  node.merge(nodeEnter).select("text")
-    .attr("x", d => (d._children || d.children) ? -9 : 9)
-    .attr("text-anchor", d => (d._children || d.children) ? "end" : "start");
+  node.merge(nodeEnter).select("text").call(placeText);
 
   node.exit().transition(t).remove()
-    .attr("transform", d => `translate(${source.y},${source.x})`)
+    .attr("transform", `translate(${px(origin)},${py(origin)})`)
     .attr("fill-opacity", 0).attr("stroke-opacity", 0);
 
   const link = gLink.selectAll("path.link").data(links, d => d.target.id);
   const linkEnter = link.enter().append("path").attr("class", "link")
-    .attr("d", d => { const o = {x: source.x0, y: source.y0}; return diagonal({source: o, target: o}); });
-  link.merge(linkEnter).transition(t).attr("d", diagonal);
+    .attr("d", () => linkPath(origin0, origin0));
+  link.merge(linkEnter).transition(t).attr("d", d => linkPath(d.source, d.target));
   link.exit().transition(t).remove()
-    .attr("d", d => { const o = {x: source.x, y: source.y}; return diagonal({source: o, target: o}); });
+    .attr("d", () => linkPath(origin, origin));
 
   root.eachBefore(d => { d.x0 = d.x; d.y0 = d.y; });
   applySearchStyles();
@@ -327,15 +358,16 @@ function fit(animate = true) {
   if (!nodes.length) return;
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   nodes.forEach(d => {
-    if (d.x < minX) minX = d.x; if (d.x > maxX) maxX = d.x;
-    if (d.y < minY) minY = d.y; if (d.y > maxY) maxY = d.y;
+    const x = px(d), y = py(d);
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
   });
-  const vpad = 40, labelPad = 200;      // room for node radius and leaf labels
-  const w = (maxY - minY) + labelPad;
-  const h = (maxX - minX) + 2 * vpad;
+  const pad = 40, labelPad = 200;       // room for node radius and labels
+  const w = (maxX - minX) + labelPad;
+  const h = (maxY - minY) + 2 * pad;
   const fullW = window.innerWidth, fullH = window.innerHeight - 44;
   const scale = Math.min(0.95 * fullW / w, 0.95 * fullH / h, 1.5);
-  const cx = (minY + maxY) / 2, cy = (minX + maxX) / 2;
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
   const tx = fullW / 2 - scale * cx;
   const ty = fullH / 2 - scale * cy;
   const target = d3.zoomIdentity.translate(tx, ty).scale(scale);
@@ -352,6 +384,7 @@ document.getElementById("expand").onclick = () => { expandAll(root); update(root
 document.getElementById("collapse").onclick = () => { root.children && root.children.forEach(collapse); update(root); fit(); };
 document.getElementById("fit").onclick = fit;
 levelSelect.onchange = () => { collapseToDepth(root, +levelSelect.value); update(root); fit(); };
+document.getElementById("orient").onchange = e => { orient = e.target.value; update(root); fit(); };
 
 const searchInput = document.getElementById("q");
 searchInput.addEventListener("input", runSearch);

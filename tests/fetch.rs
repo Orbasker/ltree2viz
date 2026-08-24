@@ -45,6 +45,7 @@ fn fetches_every_row_when_unfiltered() {
         &mut reader,
         &column(&schema, "big"),
         None,
+        None,
         &Filter::default(),
     )
     .expect("fetch");
@@ -63,6 +64,7 @@ fn root_filter_is_applied_by_the_database() {
     let rows = fetch(
         &mut reader,
         &column(&schema, "big"),
+        None,
         None,
         &Filter {
             root: Some("root1".into()),
@@ -94,6 +96,7 @@ fn depth_is_counted_from_the_root() {
         &mut reader,
         &column(&schema, "big"),
         None,
+        None,
         &Filter {
             root: Some("root1".into()),
             depth: Some(0),
@@ -105,6 +108,7 @@ fn depth_is_counted_from_the_root() {
     let one_level = fetch(
         &mut reader,
         &column(&schema, "big"),
+        None,
         None,
         &Filter {
             root: Some("root1".into()),
@@ -126,6 +130,7 @@ fn depth_without_a_root_bounds_the_whole_table() {
     let rows = fetch(
         &mut reader,
         &column(&schema, "big"),
+        None,
         None,
         &Filter {
             root: None,
@@ -149,8 +154,8 @@ fn rows_are_ordered_by_path() {
         root: Some("root1".into()),
         depth: None,
     };
-    let first = fetch(&mut reader, &column(&schema, "big"), None, &filter).expect("fetch");
-    let second = fetch(&mut reader, &column(&schema, "big"), None, &filter).expect("fetch");
+    let first = fetch(&mut reader, &column(&schema, "big"), None, None, &filter).expect("fetch");
+    let second = fetch(&mut reader, &column(&schema, "big"), None, None, &filter).expect("fetch");
 
     assert_eq!(paths(&first), paths(&second));
 
@@ -173,6 +178,7 @@ fn label_column_is_read_and_nulls_become_none() {
         &mut reader,
         &column(&schema, "big"),
         Some("name"),
+        None,
         &Filter {
             root: Some("root1.1".into()),
             depth: None,
@@ -199,6 +205,7 @@ fn null_paths_are_excluded() {
     let rows = fetch(
         &mut reader,
         &column(&schema, "sparse"),
+        None,
         None,
         &Filter::default(),
     )
@@ -229,6 +236,7 @@ fn table_names_with_dots_and_quotes_are_handled() {
             column: "pa.th".into(),
         },
         Some("la\"bel"),
+        None,
         &Filter::default(),
     )
     .expect("fetch from a dotted table");
@@ -238,6 +246,7 @@ fn table_names_with_dots_and_quotes_are_handled() {
     let quoted = fetch(
         &mut reader,
         &column(&schema, "qu\"oted"),
+        None,
         None,
         &Filter {
             root: Some("x".into()),
@@ -258,6 +267,7 @@ fn a_malformed_root_is_rejected() {
     let err = fetch(
         &mut reader,
         &column(&schema, "big"),
+        None,
         None,
         &Filter {
             root: Some("a..b".into()),
@@ -291,6 +301,7 @@ fn works_when_the_ltree_extension_lives_outside_search_path() {
             table: "t".into(),
             column: "path".into(),
         },
+        None,
         None,
         &Filter {
             root: Some("a".into()),

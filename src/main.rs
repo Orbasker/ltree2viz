@@ -14,6 +14,8 @@ use ltree2viz::core::tree::{MissingAncestors, Row, build};
 use ltree2viz::db::fetch::{Filter, fetch};
 use ltree2viz::db::{connect, introspect};
 
+mod interactive;
+
 const STDIN_ARG: &str = "-";
 
 fn main() -> ExitCode {
@@ -29,6 +31,9 @@ fn main() -> ExitCode {
 }
 
 fn run(args: &Args) -> Result<()> {
+    if interactive::should_run(args) {
+        return interactive::run(args);
+    }
     match &args.command {
         Some(Command::Tables) => run_tables(args),
         None => match args.input.as_deref() {
@@ -98,7 +103,13 @@ fn run_database(args: &Args) -> Result<()> {
         root: args.root.clone(),
         depth: args.depth,
     };
-    let rows = fetch(&mut client, &column, args.label_column.as_deref(), &filter)?;
+    let rows = fetch(
+        &mut client,
+        &column,
+        args.label_column.as_deref(),
+        args.group_by.as_deref(),
+        &filter,
+    )?;
 
     render_rows(rows, args)
 }
