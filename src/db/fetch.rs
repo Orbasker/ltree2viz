@@ -22,10 +22,11 @@ pub fn fetch(
     client: &mut Client,
     column: &LtreeColumn,
     label_column: Option<&str>,
+    group_column: Option<&str>,
     filter: &Filter,
 ) -> Result<Vec<Row>> {
     let ltree_schema = ltree_schema(client, column)?;
-    let query = build_query(column, label_column, filter, &ltree_schema)?;
+    let query = build_query(column, label_column, group_column, filter, &ltree_schema)?;
 
     let mut params: Vec<&(dyn ToSql + Sync)> = Vec::new();
     if let Some(root) = &query.root {
@@ -39,16 +40,25 @@ pub fn fetch(
         .query(&query.sql, &params)
         .with_context(|| format!("reading {column}"))?;
 
+    let group_index = 1 + usize::from(label_column.is_some());
+
     rows.into_iter()
         .map(|row| {
             let text: String = row.get(0);
-            let path = LtreePath::parse(&text)
+            let mut path = LtreePath::parse(&text)
                 .with_context(|| format!("parsing path {text:?} from {column}"))?;
             let label = if label_column.is_some() {
                 row.get::<_, Option<String>>(1)
             } else {
                 None
             };
+            // A NULL group value leaves the row as its own root rather than
+            // collapsing every ungrouped row under one blank label.
+            if group_column.is_some() {
+                if let Some(group) = row.get::<_, Option<String>>(group_index) {
+                    path = path.prepend(&group);
+                }
+            }
             Ok(Row { path, label })
         })
         .collect()
@@ -65,6 +75,7 @@ struct Query {
 fn build_query(
     column: &LtreeColumn,
     label_column: Option<&str>,
+    group_column: Option<&str>,
     filter: &Filter,
     ltree_schema: &str,
 ) -> Result<Query> {
@@ -82,6 +93,9 @@ fn build_query(
     let mut select = format!("{path}::text");
     if let Some(label) = label_column {
         select.push_str(&format!(", {}::text", quote_ident(label)));
+    }
+    if let Some(group) = group_column {
+        select.push_str(&format!(", {}::text", quote_ident(group)));
     }
 
     let mut conditions = vec![format!("{path} IS NOT NULL")];
@@ -164,7 +178,7 @@ mod tests {
     }
 
     fn build(label: Option<&str>, filter: &Filter) -> Query {
-        build_query(&column(), label, filter, "public").expect("query builds")
+        build_query(&column(), label, None, filter, "public").expect("query builds")
     }
 
     #[test]
@@ -187,6 +201,25 @@ mod tests {
             query
                 .sql
                 .starts_with("SELECT \"path\"::text, \"name\"::text FROM")
+        );
+    }
+
+    #[test]
+    fn group_column_is_selected_as_text_after_the_path() {
+        let query = build_query(
+            &column(),
+            None,
+            Some("chain_id"),
+            &Filter::default(),
+            "public",
+        )
+        .unwrap();
+        assert!(
+            query
+                .sql
+                .starts_with("SELECT \"path\"::text, \"chain_id\"::text FROM"),
+            "sql: {}",
+            query.sql
         );
     }
 
@@ -269,8 +302,8 @@ mod tests {
             table: "my.table".into(),
             column: "the\"path".into(),
         };
-        let query =
-            build_query(&column, Some("la\"bel"), &Filter::default(), "ext").expect("query builds");
+        let query = build_query(&column, Some("la\"bel"), None, &Filter::default(), "ext")
+            .expect("query builds");
 
         assert_eq!(
             query.sql,
@@ -285,6 +318,7 @@ mod tests {
     fn an_invalid_root_is_rejected_before_the_query_runs() {
         let err = build_query(
             &column(),
+            None,
             None,
             &Filter {
                 root: Some("a..b".into()),

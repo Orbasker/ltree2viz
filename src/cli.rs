@@ -33,7 +33,7 @@ impl From<DirectionArg> for Direction {
     }
 }
 
-#[derive(Debug, Parser)]
+#[derive(Debug, Clone, Parser)]
 #[command(
     name = "ltree2viz",
     version,
@@ -79,6 +79,11 @@ pub struct Args {
     #[arg(short, long)]
     pub label_column: Option<String>,
 
+    /// Group rows by this column: each distinct value becomes its own root,
+    /// with the rows sharing it hanging beneath as a separate hierarchy tree
+    #[arg(short = 'g', long)]
+    pub group_by: Option<String>,
+
     /// Restrict output to this subtree
     #[arg(short, long)]
     pub root: Option<String>,
@@ -114,9 +119,14 @@ pub struct Args {
     /// Output format: raw mermaid, or a fenced markdown block
     #[arg(short, long, value_enum, default_value_t = Format::Mermaid)]
     pub format: Format,
+
+    /// Guided prompts instead of flags; also the default when run with no
+    /// arguments in a terminal
+    #[arg(short = 'i', long)]
+    pub interactive: bool,
 }
 
-#[derive(Debug, Subcommand)]
+#[derive(Debug, Clone, Subcommand)]
 pub enum Command {
     /// List columns of type ltree in the database
     Tables,

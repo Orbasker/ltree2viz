@@ -62,6 +62,17 @@ impl LtreePath {
             .expect("LtreePath is never empty by construction")
     }
 
+    /// Returns a new path with `label` inserted as a single new top-level
+    /// ancestor. Used to group paths under a shared root (e.g. one root per
+    /// value of a grouping column); the label is kept whole even if it contains
+    /// dots, so a group value never fans out into several levels.
+    pub fn prepend(&self, label: &str) -> Self {
+        let mut labels = Vec::with_capacity(self.labels.len() + 1);
+        labels.push(label.to_owned());
+        labels.extend(self.labels.iter().cloned());
+        Self { labels }
+    }
+
     pub fn parent(&self) -> Option<Self> {
         if self.labels.len() <= 1 {
             return None;
@@ -151,6 +162,18 @@ mod tests {
     #[test]
     fn rejects_trailing_dot() {
         assert_eq!(LtreePath::parse("a.b."), Err(PathError::EmptyLabel(2)));
+    }
+
+    #[test]
+    fn prepend_adds_a_single_top_level_label() {
+        assert_eq!(parse("a.b").prepend("root"), parse("root.a.b"));
+    }
+
+    #[test]
+    fn prepend_keeps_a_dotted_group_value_as_one_label() {
+        let grouped = parse("a.b").prepend("chain.39");
+        assert_eq!(grouped.labels(), ["chain.39", "a", "b"]);
+        assert_eq!(grouped.nlevel(), 3);
     }
 
     #[test]

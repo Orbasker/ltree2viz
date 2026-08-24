@@ -48,6 +48,25 @@ const LIST_LTREE_COLUMNS_SQL: &str = "\
       AND n.nspname NOT LIKE 'pg_toast%' \
     ORDER BY n.nspname, c.relname, a.attname";
 
+/// Lists every column of a table, in definition order, for interactive pickers
+/// (choosing a label or group-by column). System columns and dropped columns are
+/// excluded.
+pub fn list_columns(client: &mut Client, schema: &str, table: &str) -> Result<Vec<String>> {
+    let rows = client.query(LIST_COLUMNS_SQL, &[&schema, &table])?;
+    Ok(rows.into_iter().map(|row| row.get(0)).collect())
+}
+
+const LIST_COLUMNS_SQL: &str = "\
+    SELECT a.attname \
+    FROM pg_attribute a \
+    JOIN pg_class c ON c.oid = a.attrelid \
+    JOIN pg_namespace n ON n.oid = c.relnamespace \
+    WHERE n.nspname = $1 \
+      AND c.relname = $2 \
+      AND a.attnum > 0 \
+      AND NOT a.attisdropped \
+    ORDER BY a.attnum";
+
 /// Resolves which column holds the hierarchy.
 ///
 /// When a table has several `ltree` columns and none was named, this fails with
