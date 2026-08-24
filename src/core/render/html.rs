@@ -314,19 +314,24 @@ function renderCrumb(target, hops) {
   document.getElementById("pathbar").classList.add("show");
 }
 
+// Selects a single node: highlights its root→node path (nodes and edges),
+// reveals it, shows the breadcrumb, and centers on it.
+function selectSingle(d) {
+  pathSource = d;
+  pathTarget = null;
+  pathIds = new Set(d.ancestors().filter(n => !n.data.virtual).map(n => n.id));
+  revealNodes([d]);
+  update(root);
+  renderCrumb(d, null);
+  centerOn(d);
+}
+
 // First shift-click (or a click after a pair is set) selects a source and shows
 // its root→node path; the second selects a target and highlights the shortest
 // path between them via their lowest common ancestor.
 function selectForPath(d) {
   if (!pathSource || pathTarget) {
-    pathSource = d;
-    pathTarget = null;
-    const chain = d.ancestors().reverse();
-    pathIds = new Set(chain.filter(n => !n.data.virtual).map(n => n.id));
-    revealNodes([d]);
-    update(root);
-    renderCrumb(d, null);
-    centerOn(d);
+    selectSingle(d);
   } else {
     pathTarget = d;
     const nodes = pathSource.path(pathTarget);
@@ -367,7 +372,7 @@ function showMatchPaths() {
   matches.forEach(m => {
     const li = document.createElement("li");
     li.textContent = crumbLabels(m).join(" › ");
-    li.onclick = () => { revealNodes([m]); update(root); centerOn(m); };
+    li.onclick = () => selectSingle(m);
     items.appendChild(li);
   });
   document.getElementById("pathlist").classList.toggle("show");
