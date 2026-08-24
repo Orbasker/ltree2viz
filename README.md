@@ -79,6 +79,12 @@ No database, no build — pipe newline-delimited paths through stdin:
 printf 'a\na.b\na.b.c\na.b.d\n' | ltree2viz -
 ```
 
+<div align="center">
+  <img src="demo/assets/cli-demo.gif" alt="ltree2viz on the command line: rendering stdin paths, wrapping output in a mermaid block with --format md, and synthesizing missing ancestors" width="100%">
+</div>
+
+<sub>The recording above is reproducible — [`demo/cli-demo.tape`](demo/cli-demo.tape) run through [VHS](https://github.com/charmbracelet/vhs).</sub>
+
 Or run the full database demo. It starts a seeded Postgres and prints a diagram,
 going from `git clone` to rendered output in one command:
 
