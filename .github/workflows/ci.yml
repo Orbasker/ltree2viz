@@ -9,6 +9,33 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  version-bump:
+    name: version bumped
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Require a Cargo.toml version bump over the base branch
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          read_ver() { grep -m1 '^version' | sed -E 's/.*"([^"]+)".*/\1/'; }
+          head_ver="$(read_ver < Cargo.toml)"
+          base_ver="$(git show "origin/${BASE_REF}:Cargo.toml" | read_ver)"
+          echo "base=$base_ver head=$head_ver"
+          if [ "$head_ver" = "$base_ver" ]; then
+            echo "::error file=Cargo.toml::Bump the version in Cargo.toml (base branch is $base_ver). Every PR must raise the version — the release is tag-driven and a stale version collides with an already-published release." >&2
+            exit 1
+          fi
+          highest="$(printf '%s\n%s\n' "$base_ver" "$head_ver" | sort -V | tail -n1)"
+          if [ "$highest" != "$head_ver" ]; then
+            echo "::error file=Cargo.toml::Cargo.toml version $head_ver is lower than the base branch ($base_ver)." >&2
+            exit 1
+          fi
+
   test:
     name: test (${{ matrix.os }})
     strategy:
