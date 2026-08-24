@@ -177,7 +177,7 @@ file, no network — with a collapsible tree, node search, expand/collapse to a
 depth, orientation control, and shift-click path highlighting:
 
 <div align="center">
-  <img src="demo/assets/html-tree.png" alt="ltree2viz --format html: an interactive collapsible tree with a toolbar for expand/collapse, depth, orientation, search, and path highlighting" width="80%">
+  <img src="demo/assets/html-demo.gif" alt="ltree2viz --format html: expanding the tree, searching for a node, and collapsing it again in the interactive HTML output" width="100%">
 </div>
 
 That is the actual `--format html` output for the same `catalog` hierarchy shown
