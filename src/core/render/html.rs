@@ -302,7 +302,7 @@ function applySearchStyles() {
 function centerOn(d) {
   const k = d3.zoomTransform(svg.node()).k;
   const fullW = window.innerWidth, fullH = window.innerHeight - 44;
-  const target = d3.zoomIdentity.translate(fullW / 2 - k * d.y, fullH / 2 - k * d.x).scale(k);
+  const target = d3.zoomIdentity.translate(fullW / 2 - k * px(d), fullH / 2 - k * py(d)).scale(k);
   svg.transition().duration(300).call(zoom.transform, target);
 }
 
