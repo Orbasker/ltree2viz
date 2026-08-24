@@ -121,6 +121,16 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   #legend { display: flex; align-items: center; gap: 14px; margin-left: 16px; color: #bbb; font-size: 11px; }
   #legend span { display: inline-flex; align-items: center; gap: 5px; }
   #legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  #search { display: inline-flex; align-items: center; gap: 6px; }
+  #search input { background: #333; color: #e6e6e6; border: 1px solid #4a4a4a;
+    border-radius: 5px; padding: 5px 8px; font-size: 12px; width: 160px; }
+  #search input:focus { outline: none; border-color: #4a9eff; }
+  #count { color: #888; font-size: 11px; min-width: 54px; }
+  .node--match circle { fill: #ffd24a; stroke: #fff3c4; }
+  .node--current circle { stroke: #ffffff; stroke-width: 3px; }
+  .node--match text { fill: #ffe9a8; }
+  .node--dim { opacity: 0.22; }
+  .link--dim { opacity: 0.12; }
 </style>
 </head>
 <body>
@@ -140,13 +150,19 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
     </select>
   </label>
   <button id="fit">Fit</button>
+  <span id="search">
+    <input id="q" type="search" placeholder="Search nodes… (/)" autocomplete="off" spellcheck="false">
+    <button id="prev" title="Previous match (Shift+Enter)">‹</button>
+    <button id="next" title="Next match (Enter)">›</button>
+    <span id="count"></span>
+  </span>
   <span id="legend">
     <span><i style="background:#35c46a"></i>root</span>
     <span><i style="background:#4a9eff"></i>branch</span>
     <span><i style="background:#2d6db5"></i>collapsed</span>
     <span><i style="background:#f0a13a"></i>leaf</span>
   </span>
-  <span id="hint">Click a node to expand/collapse · scroll to zoom · drag to pan</span>
+  <span id="hint">Click a node to expand/collapse · scroll to zoom · drag to pan · / to search</span>
 </div>
 <svg></svg>
 <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -212,6 +228,14 @@ function collapseToDepth(d, depth) {
   (d._children || []).forEach(c => collapseToDepth(c, depth));
 }
 
+// Search state. `matches` holds matched nodes from the full hierarchy (in
+// pre-order); `savedState` snapshots the collapse layout so clearing restores it.
+let matches = [];
+let matchIndex = -1;
+let savedState = null;
+
+function walkAll(fn) { (function rec(d) { fn(d); if (d._children) d._children.forEach(rec); })(root); }
+
 function update(source) {
   applyNodeSize();
   const nodes = root.descendants();
@@ -260,6 +284,87 @@ function update(source) {
     .attr("d", () => linkPath(origin, origin));
 
   root.eachBefore(d => { d.x0 = d.x; d.y0 = d.y; });
+  applySearchStyles();
+}
+
+// Highlights matches, dims everything else, and marks the current match.
+// Re-run after every update() so click/expand redraws keep search styling.
+function applySearchStyles() {
+  const active = matches.length > 0;
+  const current = matchIndex >= 0 ? matches[matchIndex] : null;
+  gNode.selectAll("g.node")
+    .classed("node--match", d => active && d._match)
+    .classed("node--dim", d => active && !d._match)
+    .classed("node--current", d => d === current);
+  gLink.selectAll("path.link").classed("link--dim", () => active);
+}
+
+function centerOn(d) {
+  const k = d3.zoomTransform(svg.node()).k;
+  const fullW = window.innerWidth, fullH = window.innerHeight - 44;
+  const target = d3.zoomIdentity.translate(fullW / 2 - k * px(d), fullH / 2 - k * py(d)).scale(k);
+  svg.transition().duration(300).call(zoom.transform, target);
+}
+
+function updateCount() {
+  const el = document.getElementById("count");
+  if (matches.length) el.textContent = `${matchIndex + 1} of ${matches.length}`;
+  else el.textContent = document.getElementById("q").value.trim() ? "0 matches" : "";
+}
+
+// Free search: the query is split on whitespace into tokens that must each
+// appear as a case-insensitive substring, in order. This skips gaps and
+// separators, so "mens ss tops" matches "MENS_SS_LS_TOPS". A single token
+// degrades to a plain substring match.
+function matchLabel(label, tokens) {
+  const hay = label.toLowerCase();
+  let from = 0;
+  for (const tok of tokens) {
+    const idx = hay.indexOf(tok, from);
+    if (idx < 0) return false;
+    from = idx + tok.length;
+  }
+  return true;
+}
+
+function runSearch() {
+  const raw = document.getElementById("q").value.trim();
+  if (!raw) { clearSearch(); return; }
+  const tokens = raw.toLowerCase().split(/\s+/).filter(Boolean);
+  if (!savedState) {
+    savedState = new Map();
+    walkAll(d => savedState.set(d.id, d.children != null));
+  }
+  matches = [];
+  walkAll(d => {
+    const hit = !d.data.virtual && matchLabel(d.data.name, tokens);
+    d._match = hit;
+    if (hit) matches.push(d);
+  });
+  // Reveal every match by expanding its ancestors; other branches keep their state.
+  matches.forEach(d => { for (let p = d.parent; p; p = p.parent) p.children = p._children; });
+  matchIndex = matches.length ? 0 : -1;
+  update(root);
+  updateCount();
+  if (matchIndex >= 0) centerOn(matches[matchIndex]);
+}
+
+function clearSearch() {
+  document.getElementById("q").value = "";
+  matches = []; matchIndex = -1;
+  walkAll(d => { d._match = false; });
+  if (savedState) { walkAll(d => { d.children = savedState.get(d.id) ? d._children : null; }); savedState = null; }
+  update(root);
+  updateCount();
+  fit();
+}
+
+function navigate(delta) {
+  if (!matches.length) return;
+  matchIndex = (matchIndex + delta + matches.length) % matches.length;
+  applySearchStyles();
+  updateCount();
+  centerOn(matches[matchIndex]);
 }
 
 // Fits from the layout coordinates rather than getBBox so it is correct even
@@ -296,6 +401,18 @@ document.getElementById("collapse").onclick = () => { root.children && root.chil
 document.getElementById("fit").onclick = fit;
 levelSelect.onchange = () => { collapseToDepth(root, +levelSelect.value); update(root); fit(); };
 document.getElementById("orient").onchange = e => { orient = e.target.value; update(root); fit(); };
+
+const searchInput = document.getElementById("q");
+searchInput.addEventListener("input", runSearch);
+searchInput.addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); navigate(e.shiftKey ? -1 : 1); }
+  else if (e.key === "Escape") { e.preventDefault(); clearSearch(); searchInput.blur(); }
+});
+document.getElementById("next").onclick = () => navigate(1);
+document.getElementById("prev").onclick = () => navigate(-1);
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && e.target !== searchInput) { e.preventDefault(); searchInput.focus(); }
+});
 
 // Start with the first level open, fit once the initial layout exists.
 collapseToDepth(root, 1);
