@@ -172,8 +172,24 @@ Common options:
 | `-o, --output <FILE>` | Write to a file instead of stdout |
 
 `--format md` wraps the flowchart in a fenced ` ```mermaid ` block for pasting
-into Markdown. `--format html` emits a self-contained interactive page with a
-collapsible tree.
+into Markdown. `--format html` emits a self-contained interactive page — one
+file, no network — with a collapsible tree, node search, expand/collapse to a
+depth, orientation control, and shift-click path highlighting:
+
+<div align="center">
+  <img src="demo/assets/html-tree.png" alt="ltree2viz --format html: an interactive collapsible tree with a toolbar for expand/collapse, depth, orientation, search, and path highlighting" width="80%">
+</div>
+
+That is the actual `--format html` output for the same `catalog` hierarchy shown
+above — generated with the [demo](#try-it-in-30-seconds):
+
+```sh
+printf 'Fruits.Apple\nFruits.Banana\nVegetables.Carrot\nGrains.Rice.Basmati\n' \
+  | ltree2viz - --format html --title catalog -o catalog.html
+```
+
+Open `catalog.html` in any browser — there is no build step and nothing to
+serve.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
