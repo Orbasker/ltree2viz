@@ -22,7 +22,7 @@ const DOWNLOAD_DIR = join(BUILD_DIR, "archives");
 
 const APP = "ltree2viz";
 const REPO = "https://github.com/Orbasker/ltree2viz";
-const DESCRIPTION = "Turn a Postgres ltree table into a Mermaid diagram";
+const DESCRIPTION = "Visualize a Postgres ltree hierarchy as a Mermaid diagram or interactive HTML tree";
 const LICENSE = "MIT OR Apache-2.0";
 
 // One entry per platform package. `target` is the Rust target triple dist built.
@@ -139,7 +139,18 @@ function assembleRoot() {
     license: LICENSE,
     repository: { type: "git", url: `git+${REPO}.git` },
     homepage: `${REPO}#readme`,
-    keywords: ["postgres", "ltree", "mermaid", "diagram", "cli"],
+    keywords: [
+      "postgres",
+      "postgresql",
+      "ltree",
+      "hierarchy",
+      "tree",
+      "mermaid",
+      "diagram",
+      "visualization",
+      "html",
+      "cli",
+    ],
     bin: { ltree2viz: "bin/ltree2viz" },
     files: ["bin"],
     engines: { node: ">=14" },
