@@ -100,15 +100,19 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   :root { color-scheme: dark; }
   html, body { margin: 0; height: 100%; background: #1e1e1e; color: #e6e6e6;
     font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  #toolbar { position: fixed; top: 0; left: 0; right: 0; height: 44px; display: flex;
-    align-items: center; gap: 8px; padding: 0 12px; background: #252526;
+  /* Column layout: the toolbar (and pathbar when shown) take their natural height
+     and the SVG flexes to fill whatever is left, so a toolbar that wraps to
+     several rows on narrow screens never overlaps or clips the canvas. */
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  #toolbar { flex: 0 0 auto; min-height: 44px; display: flex;
+    flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 12px; background: #252526;
     border-bottom: 1px solid #3a3a3a; z-index: 10; box-sizing: border-box; }
   #toolbar strong { font-weight: 600; margin-right: 8px; }
   button, select { background: #333; color: #e6e6e6; border: 1px solid #4a4a4a;
     border-radius: 5px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
   button:hover, select:hover { background: #3d3d3d; }
   #hint { margin-left: auto; color: #888; font-size: 11px; }
-  svg { position: fixed; top: 44px; left: 0; width: 100vw; height: calc(100vh - 44px); }
+  svg { flex: 1 1 auto; width: 100%; min-height: 0; display: block; touch-action: none; }
   .link { fill: none; stroke: #555; stroke-width: 1.5px; }
   .node circle { stroke-width: 1.5px; cursor: pointer; }
   .node text { fill: #e6e6e6; font-size: 12px; paint-order: stroke;
@@ -136,7 +140,7 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   .node--source circle { fill: #35c46a; stroke: #eafff2; stroke-width: 3px; }
   .node--target circle { fill: #ff5c8a; stroke: #ffe0ea; stroke-width: 3px; }
   .link--path { stroke: #b18cff; stroke-width: 2.5px; opacity: 1; }
-  #pathbar { position: fixed; left: 0; right: 0; bottom: 0; min-height: 34px; display: none;
+  #pathbar { flex: 0 0 auto; min-height: 34px; display: none;
     align-items: center; gap: 10px; padding: 6px 12px; background: #252526;
     border-top: 1px solid #3a3a3a; z-index: 10; box-sizing: border-box; font-size: 12px; }
   #pathbar.show { display: flex; }
@@ -146,7 +150,8 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   #crumb .sep { color: #666; }
   #hops { color: #b18cff; font-weight: 600; white-space: nowrap; }
   #pathbar .spacer { margin-left: auto; }
-  #pathlist { position: fixed; top: 52px; right: 12px; width: 340px; max-height: calc(100vh - 110px);
+  #pathlist { position: fixed; top: 56px; right: 12px;
+    width: min(340px, calc(100vw - 24px)); max-height: calc(100vh - 90px);
     display: none; flex-direction: column; background: #252526; border: 1px solid #3a3a3a;
     border-radius: 6px; z-index: 11; box-shadow: 0 6px 24px rgba(0,0,0,0.4); }
   #pathlist.show { display: flex; }
@@ -156,6 +161,24 @@ const TEMPLATE: &str = r##"<!DOCTYPE html>
   #plitems { list-style: decimal; margin: 0; padding: 6px 10px 8px 28px; overflow: auto; }
   #plitems li { margin: 3px 0; cursor: pointer; color: #cfe3ff; }
   #plitems li:hover { text-decoration: underline; }
+
+  /* Tablet and below: reclaim space taken by non-essential chrome. */
+  @media (max-width: 860px) {
+    #hint { display: none; }
+    #legend { margin-left: 8px; gap: 10px; }
+    #search input { width: 130px; }
+  }
+  /* Phones: let the search box grow to the full row and drop the legend. */
+  @media (max-width: 560px) {
+    #toolbar { gap: 6px; padding: 6px 8px; }
+    #toolbar strong { width: 100%; margin-right: 0; }
+    #legend { display: none; }
+    #search { flex: 1 1 100%; }
+    #search input { flex: 1 1 auto; width: auto; min-width: 0; }
+    button, select { padding: 6px 8px; }
+    #pathbar { flex-wrap: wrap; }
+    #pathbar .spacer { margin-left: 0; }
+  }
 </style>
 </head>
 <body>
@@ -211,6 +234,12 @@ const svg = d3.select("svg");
 const g = svg.append("g");
 const gLink = g.append("g");
 const gNode = g.append("g");
+
+// The SVG is a flex child that fills whatever the toolbar (and pathbar, when
+// shown) leave behind, so its own box gives the true drawable area on any screen
+// size — no need to track the toolbar's wrapped height.
+function chartW() { return svg.node().clientWidth; }
+function chartH() { return svg.node().clientHeight; }
 
 // Sibling / level gaps differ per axis: horizontal layouts stack siblings
 // tightly and spread levels wide; vertical layouts need the reverse so labels
@@ -375,7 +404,9 @@ function showMatchPaths() {
     li.onclick = () => selectSingle(m);
     items.appendChild(li);
   });
-  document.getElementById("pathlist").classList.toggle("show");
+  const list = document.getElementById("pathlist");
+  list.style.top = Math.round(svg.node().getBoundingClientRect().top + 8) + "px";
+  list.classList.toggle("show");
 }
 
 function update(source) {
@@ -455,7 +486,7 @@ function applyStyles() {
 
 function centerOn(d) {
   const k = d3.zoomTransform(svg.node()).k;
-  const fullW = window.innerWidth, fullH = window.innerHeight - 44;
+  const fullW = chartW(), fullH = chartH();
   const target = d3.zoomIdentity.translate(fullW / 2 - k * px(d), fullH / 2 - k * py(d)).scale(k);
   svg.transition().duration(300).call(zoom.transform, target);
 }
@@ -535,7 +566,7 @@ function fit(animate = true) {
   const pad = 40, labelPad = 200;       // room for node radius and labels
   const w = (maxX - minX) + labelPad;
   const h = (maxY - minY) + 2 * pad;
-  const fullW = window.innerWidth, fullH = window.innerHeight - 44;
+  const fullW = chartW(), fullH = chartH();
   const scale = Math.min(0.95 * fullW / w, 0.95 * fullH / h, 1.5);
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
   const tx = fullW / 2 - scale * cx;
@@ -574,6 +605,14 @@ document.getElementById("clearPath").onclick = clearPath;
 document.addEventListener("keydown", e => {
   if (e.key === "/" && e.target !== searchInput) { e.preventDefault(); searchInput.focus(); }
   else if (e.key === "Escape" && e.target !== searchInput && pathIds.size) { e.preventDefault(); clearPath(); }
+});
+
+// Re-fit on viewport changes (window resize, device rotation, toolbar wrapping)
+// so the tree stays centered in the flex-sized canvas.
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => fit(), 150);
 });
 
 // Start with the first level open, fit once the initial layout exists.
