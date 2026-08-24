@@ -1,8 +1,9 @@
 # ltree2viz
 
-Turn a Postgres [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
-hierarchy into a [Mermaid](https://mermaid.js.org/) diagram — straight from the
-database, from a query, or from a plain list of paths on stdin.
+Visualize a PostgreSQL [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
+hierarchy as a [Mermaid](https://mermaid.js.org/) diagram or an interactive HTML
+tree — straight from the database, from a query, or from a plain list of paths
+on stdin.
 
 ```mermaid
 ---
