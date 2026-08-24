@@ -1,9 +1,45 @@
+<a id="readme-top"></a>
+
+<div align="center">
+
 # ltree2viz
 
-Visualize a PostgreSQL [`ltree`](https://www.postgresql.org/docs/current/ltree.html)
-hierarchy as a [Mermaid](https://mermaid.js.org/) diagram or an interactive HTML
-tree — straight from the database, from a query, or from a plain list of paths
-on stdin.
+**Visualize a PostgreSQL [`ltree`](https://www.postgresql.org/docs/current/ltree.html) hierarchy as a [Mermaid](https://mermaid.js.org/) diagram or an interactive HTML tree — straight from the database, from a query, or from a plain list of paths on stdin.**
+
+[![Crates.io][crates-badge]][crates-url]
+[![Downloads][downloads-badge]][crates-url]
+[![npm][npm-badge]][npm-url]
+[![CI][ci-badge]][ci-url]
+[![License][license-badge]][license-url]
+[![MSRV][msrv-badge]][msrv-url]
+
+[Try it](#try-it-in-30-seconds) · [Install](#install) · [Usage](#usage) · [Report a bug][issues-url] · [Request a feature][issues-url]
+
+</div>
+
+<details>
+  <summary>Table of contents</summary>
+
+- [Try it in 30 seconds](#try-it-in-30-seconds)
+- [Install](#install)
+- [Usage](#usage)
+- [Connecting to a database](#connecting-to-a-database)
+- [Size guards and truncation](#size-guards-and-truncation)
+- [Synthesized ancestors (the dashed nodes)](#synthesized-ancestors-the-dashed-nodes)
+- [Requirements](#requirements)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+</details>
+
+## About
+
+Point ltree2viz at a Postgres table with an `ltree` column and it renders the
+hierarchy — no query writing, no export step. Read-only by construction (the
+crate `forbid`s `unsafe` and has no write path), it fits equally in a shell
+pipeline, a `docker compose up`, or a CI job that keeps a diagram in your docs
+in sync with the data.
 
 ```mermaid
 ---
@@ -57,6 +93,8 @@ a `path ltree` column — and the `ltree2viz` service renders it, printing the
 ` ```mermaid ` block above to the log. Paste it into any Markdown file on GitHub
 to see the picture.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Install
 
 With Node already on your machine, no toolchain needed:
@@ -100,6 +138,8 @@ brew install ltree2viz
 
 Or from a clone: `cargo install --path .`
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Usage
 
 Three ways to feed it a hierarchy:
@@ -135,6 +175,8 @@ Common options:
 into Markdown. `--format html` emits a self-contained interactive page with a
 collapsible tree.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Connecting to a database
 
 Connection details are resolved in this order — the first one that is set wins:
@@ -155,6 +197,8 @@ crate forbids `unsafe` and contains no write path at all. Managed providers
 (Neon, Supabase, RDS, …) are reached over TLS using the platform trust store;
 for a local plaintext server, add `?sslmode=disable` to the URL.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Size guards and truncation
 
 Mermaid turns into an unreadable grey blob past a few hundred nodes, so two
@@ -174,6 +218,8 @@ truncated: folded 4120 sibling(s) into "+N more" nodes; dropped 380 node(s) past
 
 Raise the limits when you want the whole thing: `--max-nodes 100000
 --max-children 100000`.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 ## Synthesized ancestors (the dashed nodes)
 
@@ -212,6 +258,8 @@ them. The `+N more` collapse nodes from the size guards are drawn the same way,
 for the same reason. Pass `--no-synthesize` to drop rows with missing ancestors
 (and get a warning for each) instead.
 
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
 ## Requirements
 
 - Postgres with the `ltree` extension installed. It does not need to be on your
@@ -236,3 +284,28 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in this crate by you, as defined in the Apache-2.0 licence, shall
 be dual-licensed as above, without any additional terms or conditions.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+## Acknowledgments
+
+- [Mermaid](https://mermaid.js.org/) — the diagram syntax GitHub renders inline.
+- PostgreSQL [`ltree`](https://www.postgresql.org/docs/current/ltree.html) — the
+  hierarchical label-path type this tool reads.
+- [Best-README-Template](https://github.com/othneildrew/Best-README-Template) —
+  the layout this README borrows from.
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+[crates-badge]: https://img.shields.io/crates/v/ltree2viz.svg?logo=rust
+[crates-url]: https://crates.io/crates/ltree2viz
+[downloads-badge]: https://img.shields.io/crates/d/ltree2viz.svg
+[npm-badge]: https://img.shields.io/npm/v/ltree2viz.svg?logo=npm
+[npm-url]: https://www.npmjs.com/package/ltree2viz
+[ci-badge]: https://github.com/Orbasker/ltree2viz/actions/workflows/ci.yml/badge.svg
+[ci-url]: https://github.com/Orbasker/ltree2viz/actions/workflows/ci.yml
+[license-badge]: https://img.shields.io/crates/l/ltree2viz.svg
+[license-url]: #license
+[msrv-badge]: https://img.shields.io/badge/MSRV-1.85-blue.svg
+[msrv-url]: #requirements
+[issues-url]: https://github.com/Orbasker/ltree2viz/issues
